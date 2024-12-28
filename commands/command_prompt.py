@@ -156,7 +156,7 @@ class CommandPrompt:
 
     def set_new_map(self, nature):
         self.level_master.gen_map(nature)
-        self.player.set_grid_pos(self.level_master.player_starting_pos)
+        self.player.initialise_starting_state(self.level_master.player_starting_pos)
         self.renderer.render_minimap()
 
     def setwalldir(self, rgb):

@@ -105,6 +105,7 @@ def main():
         # Screen refresh / Update
         renderer.update()
         state_master.update()
+
         
     pg.quit()
 

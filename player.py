@@ -7,8 +7,8 @@ class Player:
         self.level_master = level_master
         self.dims = PLAYER_DIMS
         self.x_angle = 0
-        self.y_angle = 0
-        self.set_grid_pos(level_master.player_starting_pos)
+        self.y_angle = HALF_SCREEN_DIMS[1]
+        self.initialise_starting_state(self.level_master.player_starting_pos)
         self.rect_sprite = None
         self.is_moving = False
         self.fov = FOV_MAX
@@ -82,15 +82,50 @@ class Player:
     def update_y_angle(self, add_y):
         self.y_angle = min(max(self.y_angle + add_y, 0), self.level_master.screen_dims[1])
     
+    @property
+    def gridposx(self):
+        return int(self.posx // self.level_master.cell_dims[0])
+
+    @property
+    def gridposy(self):
+        return int(self.posy // self.level_master.cell_dims[1])
+
+    @property
+    def gripos(self):
+        return (self.gridposx, self.gridposy)
+
     def get_grid_pos(self):
         gridx = int(self.posx // self.level_master.cell_dims[0])
         gridy = int(self.posy // self.level_master.cell_dims[1])
         return (gridx, gridy)
+    
+    def initialise_starting_state(self, grid_pos):
+        self.set_grid_pos(grid_pos)
+        self.set_angle()
 
     def set_grid_pos(self, grid_pos: tuple):
         x = grid_pos[0] * self.level_master.cell_dims[0] + self.level_master.cell_dims[0] // 2
         y = grid_pos[1] * self.level_master.cell_dims[1] + self.level_master.cell_dims[1] // 2
         self.set_pos((x, y))
+
+    def set_angle(self):
+        # Met à jour l'orientation, pour que le joue soit toujours face à un couloir
+        neighbour_cells = {
+            (1, 0): 0,
+            (0, 1): pi/2,
+            (-1, 0): pi,
+            (0, -1): -pi/2,    # Un peu cursed ces coordonnés, à revoir + tard      
+        }
+        for relative_position, angle in neighbour_cells.items():
+            nei_abs_x = self.gridposx + relative_position[0]
+            nei_abs_y = self.gridposy + relative_position[1]
+            if nei_abs_y > len(self.level_master.map_data) - 1:
+                continue
+            if nei_abs_x > len(self.level_master.map_data[nei_abs_y]) - 1:
+                continue
+            if self.level_master.map_data[nei_abs_y][nei_abs_x].nature == 0:
+                self.x_angle = angle
+                return
 
     def set_pos(self, pos: tuple):
         self.posx = pos[0] - player_side_size // 2

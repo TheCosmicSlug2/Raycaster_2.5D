@@ -63,32 +63,22 @@ class InputHandler:
                 pressed_keys.append(value)
 
         return pressed_keys
-    
+
+    def center_mouse(self):
+        mousex, mousey = pg.mouse.get_pos()
+        if mousex < 50 or mousex > self.level_master.screen_dims[0] - 50:
+            pg.mouse.set_pos(self.level_master.half_screen_dims[0], mousey)
+        if mousey < 50 or mousey > self.level_master.screen_dims[1] - 50:
+            pg.mouse.set_pos(mousex, self.level_master.screen_dims[1])
 
     def get_mouse_movement_since_last_frame(self) -> int:
         """Retourne l'angle du joueur en degrés basé sur la position de la souris (axe X uniquement)."""
         
-        # Obtenez la position actuelle de la souris
-        mousex, mousey = pg.mouse.get_pos()
-        
-        # Calculez le delta par rapport à la position précédente
-        delta_x = mousex - self.previous_mouse_x
-        delta_y = mousey - self.previous_mouse_y
+        dx, dy = pg.mouse.get_rel()
+    
+        norm_dx = dx * pi / 180 / self.sensitivity
+        norm_dy = dy * self.sensitivity
 
-        # Mettez à jour la position précédente pour le prochain appel
-        if mousex < 50 or mousex > self.level_master.screen_dims[0] - 50:
-            pg.mouse.set_pos(self.level_master.half_screen_dims[0], mousey)
-            self.previous_mouse_x = self.level_master.half_screen_dims[0]
-        else:
-            self.previous_mouse_x = mousex
-
-        if mousey < 50 or mousey > self.level_master.screen_dims[1] - 50:
-            pg.mouse.set_pos(mousex, self.level_master.screen_dims[1])
-            self.previous_mouse_y = self.level_master.half_screen_dims[1]
-        else:
-            self.previous_mouse_y = mousey
-        
-        norm_dx = delta_x * pi / 180 / self.sensitivity
-        norm_dy = delta_y * self.sensitivity
+        self.center_mouse()
 
         return norm_dx, norm_dy

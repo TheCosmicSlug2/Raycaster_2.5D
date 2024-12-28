@@ -38,6 +38,12 @@ class LevelMaster:
     def update_cell_dims(self):
         self.cell_dims = (self.screen_dims[0] // self.grid_dims[0], self.screen_dims[1] // self.grid_dims[1])
 
+    def show_data(self):
+        for row in self.map_data:
+            for cell in row:
+                print(cell.nature, end=" ")
+            print()
+            
 
     def set_end_nature(self):
         self.map_data[self.end[1]][self.end[0]] = Cell(nature=2, color=EXIT_COLOR)
