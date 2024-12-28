@@ -137,7 +137,7 @@ class Renderer:
         y_offset = -y_angle
 
         if player_moving:
-            y_offset += sin(tick // 2) * 4
+            y_offset += sin(tick / 2) * 7
         
         self.SCREEN.blit(self._3D_foreground, (0, y_offset))
     

@@ -46,7 +46,7 @@ class LevelMaster:
             
 
     def set_end_nature(self):
-        self.map_data[self.end[1]][self.end[0]] = Cell(nature=2, color=EXIT_COLOR)
+        self.map_data[self.end[1]][self.end[0]] = Cell(nature=END, color=EXIT_COLOR)
 
     def gen_map(self, nature: str="empty"):
         self.map_nature = nature
@@ -58,7 +58,7 @@ class LevelMaster:
             self.end = self.maze_generator.starting_cell
             self.set_end_nature()
         else:
-            self.map_data = [[Cell(nature=0) for _ in range(self.grid_dims[0])] for _ in range(self.grid_dims[1])]
+            self.map_data = [[Cell(nature=EMPTY) for _ in range(self.grid_dims[0])] for _ in range(self.grid_dims[1])]
             self.player_starting_pos = (randint(0, self.grid_dims[0]-1), randint(0, self.grid_dims[1]-1))
             self.end = (randint(0, self.grid_dims[0]-1), randint(0, self.grid_dims[1]-1))
             self.set_end_nature()
@@ -67,7 +67,7 @@ class LevelMaster:
     def add_colors_to_wall(self):
         for row in self.map_data:
             for cell in row:
-                if cell.nature == 1:
+                if cell.nature == WALL:
                     cell.color = (255, 255, 0)#(randint(120, 255), randint(120, 255), randint(120, 127))
     
 
@@ -99,5 +99,5 @@ class LevelMaster:
 
 
     def add_wall(self):
-        self.map_data[self.wall_idx//self.grid_dims[0]][self.wall_idx%self.grid_dims[0]] = Cell(nature=1, color=self.random_rgb())
+        self.map_data[self.wall_idx//self.grid_dims[0]][self.wall_idx%self.grid_dims[0]] = Cell(nature=WALL, color=self.random_rgb())
         self.wall_idx += 1

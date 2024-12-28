@@ -38,6 +38,9 @@ HALF_SCREEN_DIMS_Y_ENLARGED = (SCREEN_DIMS_Y_ENLARGED[0] // 2, SCREEN_DIMS_Y_ENL
 CELL_DIMS = (SCREEN_DIMS[0] // grid_dims[0], SCREEN_DIMS[1] // grid_dims[1])
 HALF_CELL_DIMS = (int(CELL_DIMS[0] // 2), int(CELL_DIMS[1] // 2))
 average_cell_size = (CELL_DIMS[0] + CELL_DIMS[1]) // 2
+EMPTY = 0
+WALL = 1
+END = 2
 
 
 # Commandes :

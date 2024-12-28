@@ -93,11 +93,6 @@ class Player:
     @property
     def gripos(self):
         return (self.gridposx, self.gridposy)
-
-    def get_grid_pos(self):
-        gridx = int(self.posx // self.level_master.cell_dims[0])
-        gridy = int(self.posy // self.level_master.cell_dims[1])
-        return (gridx, gridy)
     
     def initialise_starting_state(self, grid_pos):
         self.set_grid_pos(grid_pos)

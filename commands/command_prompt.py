@@ -3,6 +3,7 @@ from utils import *
 from math import pi
 from commands.text import *
 from user_input.input_handler import InputHandler
+from settings import *
 
 
 class GameCommand:
@@ -163,41 +164,41 @@ class CommandPrompt:
         wall_grid_pos = self.raycaster.first_wall_dir()
         if wall_grid_pos == None:
             return
-        self.level_master.map_data[wall_grid_pos[1]][wall_grid_pos[0]] = Cell(nature=1, color=rgb)
+        self.level_master.map_data[wall_grid_pos[1]][wall_grid_pos[0]] = Cell(nature=WALL, color=rgb)
         self.renderer.render_minimap()
 
     def setwallpos(self, pos, rgb):
-        self.level_master.map_data[pos[1]][pos[0]] = Cell(nature=1, color=rgb)
+        self.level_master.map_data[pos[1]][pos[0]] = Cell(nature=WALL, color=rgb)
         self.renderer.render_minimap()
 
     def rmwallpos(self, pos):
-        self.level_master.map_data[pos[1]][pos[0]] = Cell(nature=0)
+        self.level_master.map_data[pos[1]][pos[0]] = Cell(nature=EMPTY)
         self.renderer.render_minimap()
 
     def addwalldir(self, rgb):
         grid_pos = self.raycaster.last_space_before_wall_front_player_coord()
         if grid_pos == None:
             return
-        self.level_master.map_data[grid_pos[1]][grid_pos[0]] = Cell(nature=1, color=rgb)
+        self.level_master.map_data[grid_pos[1]][grid_pos[0]] = Cell(nature=WALL, color=rgb)
         self.renderer.render_minimap()
 
     def setwallsdir(self, rgb):
         cell_pos = self.raycaster.every_cell_in_dir()
         for cell in cell_pos:
-            self.level_master.map_data[cell[1]][cell[0]] = Cell(nature=1, color=rgb)
+            self.level_master.map_data[cell[1]][cell[0]] = Cell(nature=WALL, color=rgb)
         self.renderer.render_minimap()
 
     def rmwalldir(self):
         wall_pos = self.raycaster.first_wall_dir()
         if wall_pos == None:
             return
-        self.level_master.map_data[wall_pos[1]][wall_pos[0]] = Cell(nature=0)
+        self.level_master.map_data[wall_pos[1]][wall_pos[0]] = Cell(nature=EMPTY)
         self.renderer.render_minimap()
 
     def rmwallsdir(self):
         cell_pos = self.raycaster.every_cell_in_dir()
         for cell in cell_pos:
-            self.level_master.map_data[cell[1]][cell[0]] = Cell(nature=0)
+            self.level_master.map_data[cell[1]][cell[0]] = Cell(nature=EMPTY)
         self.renderer.render_minimap()
 
     def setpos(self, pos):
@@ -223,7 +224,7 @@ class CommandPrompt:
         self.level_master.normalised_wall_height = height
 
     def setscreendims(self, dims):
-        player_grid = self.player.get_grid_pos()
+        player_grid = self.player.gridpos
         self.level_master.update_screen_dims(dims)
         self.player.set_grid_pos(player_grid)
         self.renderer.set_dims(dims)

@@ -1,15 +1,13 @@
 from random import randint, choice
+from settings import *
+from cell import *
 
-class Cell:
-    def __init__(self, nature=None, color=None) -> None:
-        self.nature = nature
-        self.color = color
 
 class DepthFirst:
     def __init__(self, grid_dims) -> None:
 
 	    # Initialisation d'une grille pleine de murs
-        self.map_data = [[Cell(nature=1, color=(randint(200, 255), randint(0, 0), randint(200, 255))) for _ in range(grid_dims[0])] for _ in range(grid_dims[1])]
+        self.map_data = [[Cell(nature=WALL, color=(randint(200, 255), randint(0, 0), randint(200, 255))) for _ in range(grid_dims[0])] for _ in range(grid_dims[1])]
 
 	    # Choix de la cellule de départ (aléatoire)
         self.starting_cell = (randint(0, grid_dims[0] - 1), randint(0, grid_dims[1] - 1))
@@ -50,7 +48,7 @@ class DepthFirst:
                 continue
 
             cell = self.map_data[neighbour_grid_pos[1]][neighbour_grid_pos[0]]
-            if cell.nature == 0:
+            if cell.nature == EMPTY:
                 continue
             neighbours.append(neighbour_grid_pos)
         
@@ -58,7 +56,7 @@ class DepthFirst:
     
     def convert_to_ground(self, cell_pos):
         cell = self.map_data[cell_pos[1]][cell_pos[0]]
-        cell.nature = 0
+        cell.nature = EMPTY
     
     def generate_maze(self):
         maze_generating = True

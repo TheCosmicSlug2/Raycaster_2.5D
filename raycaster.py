@@ -41,7 +41,7 @@ class Raycaster:
         if grid_x >= self.level_master.grid_dims[0] or grid_y >= self.level_master.grid_dims[1]:
             return True
         
-        return self.level_master.map_data[grid_y][grid_x].nature != 0
+        return self.level_master.map_data[grid_y][grid_x].nature != EMPTY
         
         
     def find_wall_color(self, x, y):
@@ -208,7 +208,7 @@ class Raycaster:
             return None
         
         wall_grid_pos = (int(posx // self.level_master.cell_dims[0]), int(posy // self.level_master.cell_dims[1]))
-        if wall_grid_pos == self.player.get_grid_pos():
+        if wall_grid_pos == self.player.gridpos:
             wall_grid_pos = None
 
         return wall_grid_pos
@@ -229,7 +229,7 @@ class Raycaster:
         posy -= lg_y
 
         wall_grid_pos = (int(posx // self.level_master.cell_dims[0]), int(posy // self.level_master.cell_dims[1]))
-        if wall_grid_pos == self.player.get_grid_pos():
+        if wall_grid_pos == self.player.gridpos:
             wall_grid_pos = None
 
         return wall_grid_pos
@@ -237,7 +237,7 @@ class Raycaster:
     def every_cell_in_dir(self):
         """ Envoie un ray depuis la direction du joueur jusqu'à l'espace situé avant le mur devant le joueur """
         posx, posy = self.player.posx, self.player.posy
-        player_grid_pos = self.player.get_grid_pos()
+        player_grid_pos = self.player.gripos
         lg_x, lg_y = self.physics.trouver_longueurs_trigo(self.player.x_angle)
 
         wall_pos = []
