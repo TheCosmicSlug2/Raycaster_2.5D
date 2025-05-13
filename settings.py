@@ -21,7 +21,7 @@ EXIT_COLOR = BLACK
 
 
 # Labyrinthe
-grid_dims = (10, 10)
+grid_dims = (20, 20)
 solver_name = "dead_end_fill"
 
 
