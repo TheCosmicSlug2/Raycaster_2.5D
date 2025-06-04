@@ -1,4 +1,3 @@
-from settings import PLAYER_SPEED, FOV_MAX
 from math import radians, pi, cos, sin, atan2
 from physics_engine.physics import Physics
 
@@ -8,10 +7,10 @@ class Solver:
         self.level_master = level_master
         self.is_solving = True
         self.physics = Physics()
-        
+
         # Initial player grid position
         player_grid_pos = self.get_player_grid_pos()
-        
+
         # Find the path from the player's initial position
         level_master.solve_maze(player_grid_pos)
 
@@ -29,7 +28,7 @@ class Solver:
 
         # Define turning speed
         self.turning_speed = 5
-    
+
         self.dic_animation = {}
         self.on_turn_animation = False
 
@@ -40,7 +39,7 @@ class Solver:
 
 
     def get_player_grid_pos(self):
-        return (int(self.player.posx // self.level_master.cell_dims[0]), 
+        return (int(self.player.posx // self.level_master.cell_dims[0]),
                 int(self.player.posy // self.level_master.cell_dims[1]))
 
     def update_location_in_path(self):
@@ -58,9 +57,9 @@ class Solver:
         next_path_idx = self.current_idx_in_maze_solving + 1
         if next_path_idx > len(self.level_master.exit_path) - 1:
             return True
-        
+
         return False
-    
+
     def update_deltas(self):
         # Get the next grid position from the exit path
         next_path_idx = self.current_idx_in_maze_solving + 1
@@ -74,17 +73,17 @@ class Solver:
         if self.on_turn_animation:
             self.dic_animation["from"] = self.delta_x, self.delta_y
             self.dic_animation['to'] = new_dx, new_dy
-        
+
         self.delta_x, self.delta_y = new_dx, new_dy
-        
+
         self.target_angle = atan2(self.delta_y, self.delta_x)
-    
+
     def normalize_player_angle(self):
         # Normalize player angle to avoid overflow
         self.player.x_angle = (self.player.x_angle // self.turning_speed) * self.turning_speed
 
     def adjust_player_angle(self):
-        
+
         # Determine target angle based on deltas
         target_angle = self.physics.delta_to_dir[(self.delta_x, self.delta_y)]
         delta_angle = target_angle - self.player.x_angle
@@ -97,17 +96,17 @@ class Solver:
             self.player.x_angle -= self.turning_speed
         else:
             self.player.x_angle += self.turning_speed
-    
+
     def adjust_player_position(self):
         # # Center player on the grid
         # if self.delta_x != 0:
-        #     self.player.posy = (self.player.posy // self.level_master.cell_dims[1]) * self.level_master.cell_dims[1] + self.level_master.half_cell_dims[1] 
+        #     self.player.posy = (self.player.posy // self.level_master.cell_dims[1]) * self.level_master.cell_dims[1] + self.level_master.half_cell_dims[1]
         # if self.delta_y != 0:
         #     self.player.posx = (self.player.posx // self.level_master.cell_dims[0]) * self.level_master.cell_dims[0] + self.level_master.half_cell_dims[0]
-        
+
         self.player.move(self.physics.forward)
         self.is_turning = True
-    
+
     def animate_turn(self):
         angle_diff = (self.target_angle - self.player.x_angle + pi) % (2 * pi) - pi  # Normalise entre -π et π
 
@@ -123,7 +122,7 @@ class Solver:
 
 
 
-    
+
     def check_need_turning(self):
         if self.player.x_angle not in (self.physics.dirs):
             return True
@@ -133,11 +132,11 @@ class Solver:
         if self.check_reached_exit():
             self.is_solving = False
             return
-        
+
         if self.on_turn_animation:
             self.animate_turn()
             return
         else:
             self.update_deltas()
         self.adjust_player_position()
-        
+

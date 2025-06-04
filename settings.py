@@ -21,7 +21,6 @@ EXIT_COLOR = BLACK
 
 
 # Labyrinthe
-grid_dims = (20, 20)
 solver_name = "dead_end_fill"
 
 
@@ -35,9 +34,6 @@ HALF_SCREEN_DIMS_Y_ENLARGED = (SCREEN_DIMS_Y_ENLARGED[0] // 2, SCREEN_DIMS_Y_ENL
 
 
 # Cellule :
-CELL_DIMS = (SCREEN_DIMS[0] // grid_dims[0], SCREEN_DIMS[1] // grid_dims[1])
-HALF_CELL_DIMS = (int(CELL_DIMS[0] // 2), int(CELL_DIMS[1] // 2))
-average_cell_size = (CELL_DIMS[0] + CELL_DIMS[1]) // 2
 EMPTY = 0
 WALL = 1
 END = 2
@@ -55,7 +51,6 @@ player_side_size = 2
 PLAYER_SPAWN_TYPE = "random"
 PLAYER_DIMS = (player_side_size, player_side_size)
 HALF_PLAYER_DIMS = (PLAYER_DIMS[0] // 2, PLAYER_DIMS[1] // 2)
-PLAYER_SPEED = max(1, average_cell_size // 12)
 FOV_MAX = 60 * (math.pi / 180)
 
 
@@ -63,7 +58,6 @@ FOV_MAX = 60 * (math.pi / 180)
 RAY_DIMS = (3, 3)
 RAYCASTER_SIZE = 1
 RAYCASTER_RES = 1
-RAYCASTER_MAX_DST = average_cell_size * 10
 RAYCASTER_GAP = 1
 NB_RAYS = int(SCREEN_DIMS[0] / RAYCASTER_RES)
 

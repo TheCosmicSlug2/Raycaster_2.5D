@@ -23,18 +23,18 @@ class DepthFirst:
         self.longest_distance = 0
 
         self.furthest_pos = None
-    
+
     def is_out_of_bounds(self, cell_grid_pos):
         x = cell_grid_pos[0]
         y = cell_grid_pos[1]
         return not (0 <= x < self.grid_dims[0] and 0 <= y < self.grid_dims[1])
-    
+
     @staticmethod
     def find_middle_cell(first_cell, second_cell):
         middle_x = (first_cell[0] + second_cell[0]) // 2
         middle_y = (first_cell[1] + second_cell[1]) // 2
         return (middle_x, middle_y)
-    
+
     def find_available_neighbours(self):
         neighbours = []
 
@@ -51,13 +51,13 @@ class DepthFirst:
             if cell.nature == EMPTY:
                 continue
             neighbours.append(neighbour_grid_pos)
-        
+
         return neighbours
-    
+
     def convert_to_ground(self, cell_pos):
         cell = self.map_data[cell_pos[1]][cell_pos[0]]
         cell.nature = EMPTY
-    
+
     def generate_maze(self):
         maze_generating = True
         while maze_generating:
@@ -95,5 +95,5 @@ class DepthFirst:
             if self.current_distance > self.longest_distance:
                 self.longest_distance = self.current_distance
                 self.furthest_pos = self.current_grid_pos
-        
-        
+
+

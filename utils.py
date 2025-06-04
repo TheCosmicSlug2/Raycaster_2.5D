@@ -1,7 +1,7 @@
 from random import randint
 
 def random_rgb():
-    return (randint(0, 255), randint(0, 255), randint(0, 255))    
+    return (randint(0, 255), randint(0, 255), randint(0, 255))
 
 def titlelize(word: str, marge: int=2) -> str:
     """ Stylise un titre """

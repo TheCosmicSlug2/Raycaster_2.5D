@@ -17,7 +17,7 @@ class InputHandler:
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return "quit_game"
-    
+
     @staticmethod
     def get_cmd_event(last_key):
         for event in pg.event.get():
@@ -32,7 +32,7 @@ class InputHandler:
                     continue
                 else:
                     return event.unicode
-            
+
         keys = pg.key.get_pressed()
         # the only keys that need constant check, to make it faster
         if keys[pg.K_UP]:
@@ -40,8 +40,8 @@ class InputHandler:
         if keys[pg.K_DOWN]:
             return "down"
         return ""
-            
-    
+
+
     @staticmethod
     def get_keyboard_events():
         keys = pg.key.get_pressed()
@@ -57,7 +57,7 @@ class InputHandler:
             pg.K_r : "r"
         }
 
-        pressed_keys = []            
+        pressed_keys = []
         for key, value in dic_keys.items():
             if keys[key]:
                 pressed_keys.append(value)
@@ -73,9 +73,9 @@ class InputHandler:
 
     def get_mouse_movement_since_last_frame(self) -> int:
         """Retourne l'angle du joueur en degrés basé sur la position de la souris (axe X uniquement)."""
-        
+
         dx, dy = pg.mouse.get_rel()
-    
+
         norm_dx = dx * pi / 180 / self.sensitivity
         norm_dy = dy * self.sensitivity
 

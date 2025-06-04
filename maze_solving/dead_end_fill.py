@@ -25,15 +25,15 @@ class DeadEndFill:
 
             if self.is_out_of_bounds(neighbour_grid_pos):
                 continue  # On ignore les cellules en dehors des limites
-            
+
             cell = self.map_data[neighbour_grid_pos[1]][neighbour_grid_pos[0]]
 
             if cell.nature == 0:  # Passage libre
                 neighbours.append(neighbour_grid_pos)
-            
+
             if neighbour_grid_pos == self.ending_grid_pos: # Si c'est la sortie
                 neighbours.append(neighbour_grid_pos)
-        
+
         return neighbours
 
     def remove_dead_ends(self):
@@ -45,7 +45,7 @@ class DeadEndFill:
         for row_idx, row in enumerate(self.map_data):
             for column_idx, cell in enumerate(row):
                 current_cell_grid_pos = (column_idx, row_idx)
-            
+
                 # Ignorer les cellules de départ et d'arrivée
                 if current_cell_grid_pos == self.starting_grid_pos or current_cell_grid_pos == self.ending_grid_pos:
                     continue
@@ -67,7 +67,7 @@ class DeadEndFill:
 
         if dead_ends_removed > 1:
             print(f"[algorythms: DeadEndFill] : Solving... (removed {dead_ends_removed} dead ends)")
-    
+
     def solve_maze(self):
         """Résout le labyrinthe en supprimant toutes les impasses, puis rend le résultat."""
 
@@ -75,7 +75,7 @@ class DeadEndFill:
 
             self.remove_dead_ends()  # Suppression des impasses à chaque itération
 
-        # Trouver l'itinéraire 
+        # Trouver l'itinéraire
 
         current_pos = self.starting_grid_pos
         self.exit_path = [self.starting_grid_pos]
@@ -90,7 +90,7 @@ class DeadEndFill:
             current_pos = self.exit_path[-1]
 
             self.exit_dst += 1
-    
+
     def show_map_data(self):
         total_list = []
         for row_idx, row in enumerate(self.map_data):
@@ -100,17 +100,17 @@ class DeadEndFill:
 
                 if cell.nature == 1:
                     bouyaa = "⬛"
-                
+
                 if cell.nature == 0:
                     bouyaa = "⬜"
-                
+
                 if (column_idx, row_idx) == self.starting_grid_pos:
                     bouyaa = "🟥"
 
                 if cell.nature == 2:
                     bouyaa = "🟩"
 
-                    
+
                 new_row.append(bouyaa)
 
             string = "".join(new_row)

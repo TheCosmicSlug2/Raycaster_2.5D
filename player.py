@@ -1,43 +1,32 @@
-from settings import *
+from math import pi, sqrt
+from random import choice
 from physics_engine.physics import Physics
-from math import pi
+from settings import PLAYER_DIMS, HALF_SCREEN_DIMS, FOV_MAX, FPS, player_side_size
 
 class Player:
-    def __init__(self, level_master):
+    def __init__(self, level_master, far_spawn=False):
         self.level_master = level_master
+        self.far_spawn = far_spawn
         self.dims = PLAYER_DIMS
         self.x_angle = 0
         self.y_angle = HALF_SCREEN_DIMS[1]
-        self.initialise_starting_state(self.level_master.player_starting_pos)
+        if self.far_spawn:
+            self.initialise_starting_state(self.level_master.player_starting_pos)
+        else:
+            self.goto_random_location()
+        self.set_angle()
         self.rect_sprite = None
         self.is_moving = False
         self.fov = FOV_MAX
-        self.speed = PLAYER_SPEED
+        self.speed = sqrt(self.level_master.cellw * self.level_master.cellh) / (FPS / 2)
 
-    def spawn_player_random(self):
-        """ Fait appraître le joueur dans un endroit aléatoire et vide """
-        for row_idx in range(grid_dims[1]):
-            for column_idx in range(grid_dims[0]):
-                if self.level_master.map_data[row_idx][column_idx] == 0:
+    @property
+    def width(self):
+        return self.dims[0]
 
-                    self.posx = column_idx * CELL_DIMS[0] + CELL_DIMS[0] // 2
-                    self.posy = row_idx * CELL_DIMS[1] + CELL_DIMS[1] // 2
-                    return True
-
-        return False
-
-
-    def spawn_player_center(self):
-        """ Supprime un possible mur central et fait appraître le joueur à cet endroit """
-
-        center_row = grid_dims[0] // 2
-        center_column = grid_dims[1] // 2
-        self.level_master.map_data[center_row][center_column] = 0
-
-        self.posx = center_column * CELL_DIMS[0] // 2
-        self.posy = center_row * CELL_DIMS[1] // 2
-
-        return True
+    @property
+    def height(self):
+        return self.dims[1]
 
 
     def move(self, mvt_dir) -> None:
@@ -47,7 +36,7 @@ class Player:
         next_x, next_y = self.posx + (lg_x * self.speed), self.posy + (lg_y * self.speed)
         # si le movement suivant collide un mur
         if Physics.check_4_side_collision(
-            top_left_pos=(next_x, next_y), 
+            top_left_pos=(next_x, next_y),
             object_dims=self.dims,
             cell_dims=self.level_master.cell_dims,
             map_data=self.level_master.map_data,
@@ -61,15 +50,9 @@ class Player:
     def check_collisions_border(self) -> None:
         """ Checke les collisions avec les bordures de la carte """
         # collisions horizontales
-        if self.posx > self.level_master.screen_dims[0] - self.dims[0]:
-            self.posx = self.level_master.screen_dims[0] - self.dims[0]
-        if self.posx < 0:
-            self.posx = 0
+        self.posx = max(0, min(self.posx, self.level_master.screenw - self.width))
         # collisions verticales
-        if self.posy > self.level_master.screen_dims[1] - self.dims[1]:
-            self.posy = self.level_master.screen_dims[1] - self.dims[1]
-        if self.posy < 0:
-            self.posy = 0
+        self.posy = max(0, min(self.posy, self.level_master.screenh - self.height))
 
     def update_x_angle(self, add_x):
         self.x_angle += add_x
@@ -80,28 +63,52 @@ class Player:
             self.x_angle -= 2 * pi
 
     def update_y_angle(self, add_y):
-        self.y_angle = min(max(self.y_angle + add_y, 0), self.level_master.screen_dims[1])
-    
+        self.y_angle = min(max(self.y_angle + add_y, 0), self.level_master.screenh)
+
+    @property
+    def pos(self):
+        return self.posx, self.posy
+
+    @pos.setter
+    def pos(self, _pos):
+        self.posx, self.posy = _pos
+
     @property
     def gridposx(self):
-        return int(self.posx // self.level_master.cell_dims[0])
+        return int(self.posx // self.level_master.cellw)
+
+    @gridposx.setter
+    def gridposx(self, _gridx):
+        self.posx = self.level_master.cellw * (_gridx + 0.5) - PLAYER_DIMS[0] // 2
 
     @property
     def gridposy(self):
-        return int(self.posy // self.level_master.cell_dims[1])
+        return int(self.posy // self.level_master.cellh)
+
+    @gridposy.setter
+    def gridposy(self, _gridy):
+        self.posy = self.level_master.cellh * (_gridy + 0.5) - PLAYER_DIMS[1] // 2
 
     @property
-    def gripos(self):
+    def gridpos(self):
         return (self.gridposx, self.gridposy)
-    
-    def initialise_starting_state(self, grid_pos):
-        self.set_grid_pos(grid_pos)
-        self.set_angle()
 
-    def set_grid_pos(self, grid_pos: tuple):
-        x = grid_pos[0] * self.level_master.cell_dims[0] + self.level_master.cell_dims[0] // 2
-        y = grid_pos[1] * self.level_master.cell_dims[1] + self.level_master.cell_dims[1] // 2
-        self.set_pos((x, y))
+    @gridpos.setter
+    def gridpos(self, _gripos):
+        self.gridposx, self.gridposy = _gripos
+
+    def initialise_starting_state(self, grid_pos):
+        self.gridpos = grid_pos
+
+    def goto_random_location(self):
+        # Get empty cells
+        startposes = []
+        for row_idx, row in enumerate(self.level_master.map_data):
+            for col_idx, cell in enumerate(row):
+                if not cell.nature:
+                    startposes.append((col_idx, row_idx))
+        self.gridpos = choice(startposes)
+
 
     def set_angle(self):
         # Met à jour l'orientation, pour que le joue soit toujours face à un couloir
@@ -109,7 +116,7 @@ class Player:
             (1, 0): 0,
             (0, 1): pi/2,
             (-1, 0): pi,
-            (0, -1): -pi/2,    # Un peu cursed ces coordonnés, à revoir + tard      
+            (0, -1): -pi/2,    # Un peu cursed ces coordonnés, à revoir + tard
         }
         for relative_position, angle in neighbour_cells.items():
             nei_abs_x = self.gridposx + relative_position[0]

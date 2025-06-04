@@ -14,7 +14,7 @@ class WallFollower:
         self.side = side
         self.exit_dst = 0
 
-        self.heading = 0        
+        self.heading = 0
         # N E S W - just a helpful reminder
         # 0 1 2 3
 
@@ -28,26 +28,26 @@ class WallFollower:
         x, y = pos
         cell = self.map_data[y][x]
         return cell.nature == 1
-    
+
     def is_out_of_bounds(self, pos):
         x, y = pos
         return not (0 <= y < self.grid_dims[0] and 0 <= x < self.grid_dims[1])
-    
+
     def find_neighbours(self):
 
         neighbourgs = []
-        # Haut 
+        # Haut
         for vector in [(0, -1), (1, 0), (0, 1), (-1, 0)]:
             nei_cell = (
                 self.current_pos[0] + vector[0],
                 self.current_pos[1] + vector[1]
             )
-            
+
             if self.is_out_of_bounds(nei_cell) or self.is_wall(nei_cell):
                 neighbourgs.append(None)
             else:
                 neighbourgs.append(nei_cell)
-        
+
         return neighbourgs
 
     def solve_maze(self):
@@ -59,7 +59,7 @@ class WallFollower:
 
             n = self.find_neighbours()
 
-            # A gauche 
+            # A gauche
             if n[(self.heading - self.turn) % 4] != None:
                 self.heading = (self.heading - self.turn) % 4
                 self.current_pos = n[self.heading]
@@ -81,5 +81,5 @@ class WallFollower:
                 self.heading = (self.heading + 2) % 4
                 self.current_pos = n[self.heading]
                 continue
-        
-    
+
+

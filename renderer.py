@@ -1,5 +1,6 @@
 import pygame as pg
-from settings import *
+from settings import FPS, const_wall_height, GREEN, BLUE, CYAN, DARK2GRAY,\
+    DARKGRAY, EXIT_COLOR, WHITE1, HALF_PLAYER_VISIBLE_SIZE, BLACK, PLAYER_VISBLE_SIZE
 from math import sin
 
 
@@ -19,13 +20,13 @@ class Renderer:
         self.render_3D_background()
 
         # CMD
-        
+
         self.MAX_LINES = 30
-        self.LINE_HEIGHT = self.level_master.screen_dims[1] // self.MAX_LINES
+        self.LINE_HEIGHT = self.level_master.screenh // self.MAX_LINES
         self.cmdcolor = GREEN
         self.cmdfontname = "Consolas"
         self.cmdfont = pg.font.SysFont(self.cmdfontname, self.LINE_HEIGHT)
-    
+
     def set_dims(self, dims):
         self.SCREEN = pg.display.set_mode(dims)
 
@@ -44,17 +45,21 @@ class Renderer:
             g = g1 + (g2 - g1) * ratio
             b = b1 + (b2 - b1) * ratio
 
-            pg.draw.line(surface, (int(r), int(g), int(b)), (rect.x, rect.y + y), (rect.x + rect.width, rect.y + y))
+            pg.draw.line(
+                surface,
+                (int(r), int(g), int(b)), (rect.x, rect.y + y),
+                (rect.x + rect.width, rect.y + y)
+            )
 
 
     def render_3D_background(self):
         self._3D_background = pg.Surface(self.level_master.screen_dims_Y_enlarged)
 
-        up_rect = pg.Rect(0, 0, self.level_master.screen_dims[0], self.level_master.screen_dims[1])
+        up_rect = pg.Rect(0, 0, self.level_master.screenw, self.level_master.screenh)
         self.draw_vertical_gradient(self._3D_background, up_rect, BLUE, CYAN) #BLACK, ORANGE)#
-        down_rect = pg.Rect(0, self.level_master.screen_dims[1], self.level_master.screen_dims[0], self.level_master.screen_dims[1])
+        down_rect = pg.Rect(0, self.level_master.screenh, self.level_master.screenw, self.level_master.screenh)
         self.draw_vertical_gradient(self._3D_background, down_rect, DARK2GRAY, DARKGRAY)
-    
+
 
     def render_3D_foreground(self, liste_raycast: list, wall_colors: list):
         """ Dessine en 3D avec une liste des distances + "couleurs" pour chque distance """
@@ -65,12 +70,12 @@ class Renderer:
         self._3D_foreground.blit(self._3D_background, (0, 0))
 
         nb_of_rays = len(liste_raycast)
-        ray_width = self.level_master.screen_dims[0] / nb_of_rays
+        ray_width = self.level_master.screenw / nb_of_rays
 
         for ray_idx, ray_dst in enumerate(liste_raycast):
             if ray_dst is None:  # ne pas dessiner les rayons qui vont à l'infini
                 continue
-               
+
             # Calculer la hauteur à l'écran du mur
             wall_height = self.level_master.normalised_wall_height / ray_dst
 
@@ -85,13 +90,13 @@ class Renderer:
             # Calculer la couleur
             ray_color = wall_colors[ray_idx]
             wall_color_with_shades = (
-                int(max(0, ray_color[0] - ray_dst // 2)), 
-                int(max(0, ray_color[1] - ray_dst // 2)), 
+                int(max(0, ray_color[0] - ray_dst // 2)),
+                int(max(0, ray_color[1] - ray_dst // 2)),
                 int(max(0, ray_color[2] - ray_dst // 2))
             )
 
             # Dessiner le mur
-            wall_slice = pg.Rect(ray_x_int, self.level_master.screen_dims[1] - int(wall_height / 2), ray_width_int, int(wall_height))
+            wall_slice = pg.Rect(ray_x_int, self.level_master.screenh - int(wall_height / 2), ray_width_int, int(wall_height))
 
             pg.draw.rect(self._3D_foreground, wall_color_with_shades, wall_slice)
 
@@ -110,9 +115,14 @@ class Renderer:
                 if cell.nature == 2: # Sortie
                     rect_color = EXIT_COLOR
 
-                rect = pg.Rect(idx_column * self.level_master.cell_dims[0], idx_row * self.level_master.cell_dims[1], self.level_master.cell_dims[0], self.level_master.cell_dims[1])
+                rect = pg.Rect(
+                    idx_column * self.level_master.cellw,
+                    idx_row * self.level_master.cellh,
+                    self.level_master.cellw,
+                    self.level_master.cellh
+                )
                 pg.draw.rect(self.minimap, rect_color, rect)
-    
+
     def show_minimap(self):
         self.SCREEN.blit(self.minimap)
 
@@ -120,27 +130,40 @@ class Renderer:
 
         # Render les rays
         self.SCREEN.blit(self.minimap, (0, 0))
-        player_center = (player.posx + HALF_PLAYER_VISIBLE_SIZE[0], player.posy + HALF_PLAYER_VISIBLE_SIZE[1])
+        player_center = (
+            player.posx + HALF_PLAYER_VISIBLE_SIZE[0],
+            player.posy + HALF_PLAYER_VISIBLE_SIZE[1]
+        )
 
         for ray_pos in raycaster.rays_final_pos:
-            pg.draw.line(self.SCREEN, (255, 0, 0), (player_center[0], player_center[1]), (ray_pos[0], ray_pos[1]))
+            pg.draw.line(
+                self.SCREEN,
+                (255, 0, 0),
+                (player_center[0], player_center[1]),
+                (ray_pos[0], ray_pos[1])
+            )
 
         # Render le joueur
-        pg.draw.circle(self.SCREEN, BLACK, (player_center[0], player_center[1]), PLAYER_VISBLE_SIZE[1])
-    
+        pg.draw.circle(
+            self.SCREEN,
+            BLACK,
+            (player_center[0], player_center[1]),
+            PLAYER_VISBLE_SIZE[1]
+        )
+
 
     def render_command_background_on_screen(self):
         self.SCREEN.blit(self.background_command, (0, 0))
-    
-    
+
+
     def render_3D_foreground_on_screen(self, player_moving, y_angle, tick):
         y_offset = -y_angle
 
         if player_moving:
             y_offset += sin(tick / 2) * 7
-        
+
         self.SCREEN.blit(self._3D_foreground, (0, y_offset))
-    
+
 
     def update(self):
         pg.display.flip()
@@ -163,7 +186,7 @@ class Renderer:
             line_surface = self.cmdfont.render(line, True, self.cmdcolor)
             self.SCREEN.blit(line_surface, (10, y))
             y += self.LINE_HEIGHT
-        
+
         # Ajoute l'input
         if (pg.time.get_ticks() // 500) % 2 == 0:
             cursor = "|"

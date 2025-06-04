@@ -1,5 +1,5 @@
 from cell import Cell
-from utils import * 
+from utils import *
 from math import pi
 from commands.text import *
 from user_input.input_handler import InputHandler
@@ -11,7 +11,7 @@ class GameCommand:
         self.name, raw_args = self.get_command_components(command)
         self.args = self.get_args_components(raw_args)
         self.nb_args = len(self.args)
-    
+
     @staticmethod
     def get_command_components(command: str):
         command_list = command.split(" ")
@@ -20,7 +20,7 @@ class GameCommand:
     @staticmethod
     def get_args_components(args: list[str]):
         return [arg.split(",") if "," in arg else arg for arg in args]
-    
+
 
 
 class CommandPrompt:
@@ -37,7 +37,7 @@ class CommandPrompt:
         self.input_line = ""
         self.game_running = True
 
-    
+
     @staticmethod
     def get_instructions() -> str:
         text = f"{titlelize('Available Commands')} \n"
@@ -45,35 +45,36 @@ class CommandPrompt:
             text += f" - \"{ligne}\"\n"
         text += "\nType 'help [command name]' to show the help for a command"
         return text
-    
+
     def show_instructions(self):
         self.add_line()
         for line in self.get_instructions().split("\n"):
             self.add_line(line)
         self.add_line()
-    
+
     def input_command(self, command):
         self.command = GameCommand(command)
-    
+
     def add_line(self, line: str=""):
         self.output_lines.append(line)
-    
+
     def valid(self, command: GameCommand) -> bool:
-        if not (command.name in instructions.keys()):
+        if command.name not in instructions.keys() and command.name not in aliases:
             self.add_line(f"Command \"{command.name}\" not recognised")
             return False
-        if not (command.nb_args == instructions[command.name]):
+        studied_command = GameCommand(aliases[command.name]) if command.name in aliases else command
+        if studied_command.nb_args != instructions[studied_command.name]:
             self.add_line(f"Wrong number of arguments (expected : {instructions[command.name]}, received : {command.nb_args})")
             return False
         return True
-    
+
     def execute_command(self):
         self.exit = False
         self.execution_sucess = True
         if not self.valid(self.command):
             self.execution_sucess = False
-            return 
-        
+            return
+
         if self.command.name == "newmap":
             nature = self.command.args[0]
             self.set_new_map(nature)
@@ -94,31 +95,7 @@ class CommandPrompt:
             self.rmwallsdir()
         if self.command.name == "rmwallsdir":
             self.rmwallsdir()
-        if self.command.name == "setpos":
-            pos = self.string_array_to_int_array(self.command.args[0])
-            self.setpos(pos)
-        if self.command.name == "setgridpos":
-            grid_pos = self.string_array_to_int_array(self.command.args[0])
-            self.setgridpos(grid_pos)
-        if self.command.name == "setfov":
-            fov = self.array_to_int(self.command.args[0])
-            self.setfov(fov)
-        if self.command.name == "setspeed":
-            speed = self.get_int(self.command.args[0])
-            self.setspeed(speed)
-        if self.command.name == "setsolve":
-            solve_method = self.command.args[0]
-            self.setsolve(solve_method)
-        if self.command.name == "setfps":
-            fps = self.get_int(self.command.args[0])
-            self.setfps(fps)
-        if self.command.name == "setwallheight":
-            wall_height = self.get_int(self.command.args[0])
-            self.setwallheight(wall_height)
-        if self.command.name == "setscreendims":
-            screen_dims = self.string_array_to_int_array(self.command.args[0])
-            self.setscreendims(screen_dims)
-        if self.command.name == "clear":
+        if self.command.name in ("clear", "cls"):
             self.output_lines = []
             self.pretext()
         if self.command.name == "show":
@@ -126,33 +103,33 @@ class CommandPrompt:
         if self.command.name == "help":
             help_command = self.command.args[0]
             self.displayhelp(help_command)
-        if self.command.name == "exit":
+        if self.command.name in ("exit", "q"):
             self.exit = True
-        if self.command.name == "setcmdcolor":
-            rgb = self.string_array_to_int_array(self.command.args[0])
-            self.setcmdcolor(rgb)
-        if self.command.name == "setcmdfont":
-            font = self.command.args[0]
-            self.setcmdfont(font)
-        if self.command.name == "getvar":
+        if self.command.name == "get":
             var_name = self.command.args[0]
             self.getvar(var_name)
-    
-    
-    @staticmethod
-    def string_array_to_int_array(array):
-        return [int(element) for element in array]
-    
+        if self.command.name == "set":
+            var_name = self.command.args[0]
+            self.setvar(var_name, self.command.args[1])
+
+
+    def string_array_to_int_array(self, array):
+        try:
+            return [int(element) for element in array]
+        except:
+            self.add_line(f"Couldn't convert {array} to ints")
+
     def array_to_int(self, array):
         new_array = self.string_array_to_int_array(array)
         return new_array[0]
-    
+
     def get_int(self, string: str):
         try:
             return int(string)
         except:
             self.add_line("Parameter is not numeric")
-            
+            return False
+
 
 
     def set_new_map(self, nature):
@@ -201,36 +178,6 @@ class CommandPrompt:
             self.level_master.map_data[cell[1]][cell[0]] = Cell(nature=EMPTY)
         self.renderer.render_minimap()
 
-    def setpos(self, pos):
-        self.player.set_pos(pos)
-
-    def setgridpos(self, grid_pos):
-        self.player.set_grid_pos(grid_pos)
-
-    def setfov(self, fov):
-        self.player.fov = fov * (pi / 180)
-
-    def setspeed(self, speed):
-        self.player.speed = speed
-
-    def setsolve(self, method: str):
-        self.level_master.solver_name = method
-
-    def setfps(self, fps):
-        print(fps)
-        self.renderer.fps = fps
-
-    def setwallheight(self, height):
-        self.level_master.normalised_wall_height = height
-
-    def setscreendims(self, dims):
-        player_grid = self.player.gridpos
-        self.level_master.update_screen_dims(dims)
-        self.player.set_grid_pos(player_grid)
-        self.renderer.set_dims(dims)
-        self.renderer.render_3D_background()
-        self.renderer.render_minimap()
-    
     def displayhelp(self, help_command: list):
         # Get the command data
         command_name = help_command
@@ -242,7 +189,7 @@ class CommandPrompt:
         description = command_data["description"]
         params = command_data["param"]
         exemples = command_data["exemple"]
-        
+
         self.add_line()
         for line in titlelize('Help').split("\n"):
             self.add_line(line)
@@ -259,13 +206,9 @@ class CommandPrompt:
         for exemple in exemples:
             self.add_line(f" - {exemple}")
         self.add_line()
-    
-    def setcmdcolor(self, color):
-        self.renderer.cmdcolor = color
-    
-    def setcmdfont(self, font):
-        self.renderer.setcmdfont(font)
-    
+
+
+
     def getvar(self, var_name):
         # Créer un dictionnaire des variables qui nous intéressent
         supported_vars = {
@@ -284,14 +227,50 @@ class CommandPrompt:
         if var_name not in supported_vars.keys():
             self.add_line(f"Variable \"{var_name}\" not found")
             return
-        
+
         var_value = supported_vars[var_name]
         if isinstance(var_value, dict):
             for key, value in var_value.items():
                 self.add_line(f"Value of \"{key}\" : {value} (type : {type(value).__name__})")
             return
         self.add_line(f"Value of \"{var_name}\" : {var_value} (type : {type(var_value).__name__})")
-        
+
+    def setvar(self, var_name, value):
+        strings = ("cmdfont", "solve")
+        ints = ("fov", "speed", "fps", "wallheight", "posx", "posy", "gridposx", "gridposy")
+        tuples = ("screendims", "cmdcolor", "pos", "gridpos")
+
+        if var_name in strings:
+            if var_name == "cmdfont":
+                self.renderer.setcmdfont(value)
+            if var_name == "solve":
+                self.level_master.solver_name = value
+        if var_name in ints:
+            value = self.get_int(value)
+            if not value:
+                return
+            if var_name == "fov":
+                value = value % 360
+                value *= (pi/180)
+            if var_name in ("fov", "speed", "posx", "posy", "posy", "gridposx", "gridposy"):
+                setattr(self.player, var_name, value)
+            if var_name == "fps":
+                self.renderer.fps = int(value)
+            if var_name == "wallheight":
+                self.level_master.normalised_wall_height = value
+        if var_name in tuples:
+            value = self.string_array_to_int_array(value)
+            if var_name in ("pos", "gridpos"):
+                setattr(self.player, var_name, value)
+            if var_name == "screendims":
+                player_grid = self.player.gridpos
+                self.level_master.update_screen_dims(value)
+                self.player.set_grid_pos(player_grid)
+                self.renderer.set_dims(value)
+                self.renderer.render_3D_background()
+                self.renderer.render_minimap()
+            if var_name == "cmdcolor":
+                self.renderer.cmdcolor = value
 
     def pretext(self):
         self.add_line()
@@ -331,7 +310,7 @@ class CommandPrompt:
             else:
                 self.input_line += input
                 scroll_up = -1
-            
+
             if ask_command:
                 self.input_command(self.input_line)
                 self.output_lines.append(f" > {self.input_line}")
@@ -345,5 +324,5 @@ class CommandPrompt:
 
 
 
-            
+
 
