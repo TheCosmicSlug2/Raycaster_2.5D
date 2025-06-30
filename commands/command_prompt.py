@@ -29,7 +29,7 @@ class CommandPrompt:
         self.raycaster = raycaster
         self.player = player
         self.renderer = renderer
-        self.command = None
+        self.command: GameCommand
         self.execution_sucess = None
         self.exit = False
 
@@ -82,6 +82,12 @@ class CommandPrompt:
             pos = self.string_array_to_int_array(self.command.args[0])
             rgb = self.string_array_to_int_array(self.command.args[1])
             self.setwallpos(pos, rgb)
+        if self.command.name == "addwalldir":
+            rgb = self.string_array_to_int_array(self.command.args[0])
+            self.addwalldir(rgb)
+        if self.command.name == "addwallsdir":
+            rgb = self.string_array_to_int_array(self.command.args[0])
+            self.addwallsdir(rgb)
         if self.command.name == "setwalldir":
             rgb = self.string_array_to_int_array(self.command.args[0])
             self.setwalldir(rgb)
@@ -92,7 +98,7 @@ class CommandPrompt:
             pos = self.string_array_to_int_array(self.command.args[0])
             self.rmwallpos(pos)
         if self.command.name == "rmwalldir":
-            self.rmwallsdir()
+            self.rmwalldir()
         if self.command.name == "rmwallsdir":
             self.rmwallsdir()
         if self.command.name in ("clear", "cls"):
@@ -121,6 +127,9 @@ class CommandPrompt:
 
     def array_to_int(self, array):
         new_array = self.string_array_to_int_array(array)
+        if not new_array:
+            input("Wrong Array in function 'array_to_int', (type None)")
+            return
         return new_array[0]
 
     def get_int(self, string: str):
@@ -134,7 +143,7 @@ class CommandPrompt:
 
     def set_new_map(self, nature):
         self.level_master.gen_map(nature)
-        self.player.initialise_starting_state(self.level_master.player_starting_pos)
+        self.player.reset_position()
         self.renderer.render_minimap()
 
     def setwalldir(self, rgb):
@@ -153,10 +162,23 @@ class CommandPrompt:
         self.renderer.render_minimap()
 
     def addwalldir(self, rgb):
-        grid_pos = self.raycaster.last_space_before_wall_front_player_coord()
+        liste = self.raycaster.empty_spaces_before_wall()
+        if not liste:
+            return
+        grid_pos = liste[-1]
         if grid_pos == None:
+            self.add_line("Can't add a wall on the player")
             return
         self.level_master.map_data[grid_pos[1]][grid_pos[0]] = Cell(nature=WALL, color=rgb)
+        self.renderer.render_minimap()
+    
+    def addwallsdir(self, rgb):
+        positions = self.raycaster.empty_spaces_before_wall()
+        for gridpos in positions:
+            if gridpos == None:
+                self.add_line("Can't add a wall on the player - skipping 1 wall")
+                continue
+            self.level_master.map_data[gridpos[1]][gridpos[0]] = Cell(nature=WALL, color=rgb)
         self.renderer.render_minimap()
 
     def setwallsdir(self, rgb):
@@ -178,7 +200,7 @@ class CommandPrompt:
             self.level_master.map_data[cell[1]][cell[0]] = Cell(nature=EMPTY)
         self.renderer.render_minimap()
 
-    def displayhelp(self, help_command: list):
+    def displayhelp(self, help_command: str):
         # Get the command data
         command_name = help_command
         if command_name not in help_list.keys():
@@ -271,6 +293,12 @@ class CommandPrompt:
                 self.renderer.render_minimap()
             if var_name == "cmdcolor":
                 self.renderer.cmdcolor = value
+    
+    def get_suggested_command(self) -> str:
+        for command in instructions:
+            if command.startswith(self.input_line):
+                return command
+        return self.input_line
 
     def pretext(self):
         self.add_line()
@@ -305,6 +333,9 @@ class CommandPrompt:
                 scroll_up = min(scroll_up + 1, abs((len(self.output_lines) - self.renderer.MAX_LINES)))
             elif input == "down":
                 scroll_up = max(scroll_up - 1, -1)
+            elif input == "tab":
+                self.input_line = self.get_suggested_command()
+                
             elif input == "":
                 pass
             else:

@@ -10,10 +10,7 @@ class Player:
         self.dims = PLAYER_DIMS
         self.x_angle = 0
         self.y_angle = HALF_SCREEN_DIMS[1]
-        if self.far_spawn:
-            self.initialise_starting_state(self.level_master.player_starting_pos)
-        else:
-            self.goto_random_location()
+        self.reset_position()
         self.set_angle()
         self.rect_sprite = None
         self.is_moving = False
@@ -28,6 +25,11 @@ class Player:
     def height(self):
         return self.dims[1]
 
+    def reset_position(self):
+        if self.far_spawn:
+            self.gridpos = self.level_master.player_starting_pos
+        else:
+            self.goto_random_location()
 
     def move(self, mvt_dir) -> None:
         """ Déplace le joueur selon un angle """
@@ -96,9 +98,6 @@ class Player:
     @gridpos.setter
     def gridpos(self, _gripos):
         self.gridposx, self.gridposy = _gripos
-
-    def initialise_starting_state(self, grid_pos):
-        self.gridpos = grid_pos
 
     def goto_random_location(self):
         # Get empty cells

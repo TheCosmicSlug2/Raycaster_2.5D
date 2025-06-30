@@ -17,6 +17,11 @@ class InputHandler:
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return "quit_game"
+            if event.type == pg.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    return "leftclick"
+                if event.button == 3:
+                    return "rightclick"
 
     @staticmethod
     def get_cmd_event(last_key):
@@ -28,6 +33,8 @@ class InputHandler:
                     return "return"
                 elif event.key == pg.K_BACKSPACE:
                     return "backspace"
+                elif event.key == pg.K_TAB:
+                    return "tab"
                 elif event.key == pg.K_UP or event.key == pg.K_DOWN:
                     continue
                 else:
@@ -54,7 +61,7 @@ class InputHandler:
             pg.K_m: "map",
             pg.K_c: "cmd",
             pg.K_ESCAPE: "esc",
-            pg.K_r : "r"
+            pg.K_r : "r",
         }
 
         pressed_keys = []
@@ -71,7 +78,7 @@ class InputHandler:
         if mousey < 50 or mousey > self.level_master.screen_dims[1] - 50:
             pg.mouse.set_pos(mousex, self.level_master.screen_dims[1])
 
-    def get_mouse_movement_since_last_frame(self) -> int:
+    def get_mouse_movement_since_last_frame(self) -> tuple:
         """Retourne l'angle du joueur en degrés basé sur la position de la souris (axe X uniquement)."""
 
         dx, dy = pg.mouse.get_rel()

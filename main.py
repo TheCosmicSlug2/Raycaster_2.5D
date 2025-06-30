@@ -21,10 +21,10 @@ MENU_WIDGET = {
                  colors=[(200, 200, 200), (170, 170, 170), (130, 130, 130), (100, 100, 100)], borders=[3, 3, 3],
                  animation={"color": -6, "size": (3, 2)}),
     2: sf.Label((260, 170), (150, 30), "Maze width :", sf.WHITE, text_height=25, colors=[sf.TRANSPARENT]),
-    3: sf.Slider((410, 175), (120, 30), range=(5, 50), default_value=20, colors=[(70, 70, 70), sf.LIGHTBLUE],
+    3: sf.Slider((410, 175), (120, 30), range=(5, 50), default_value=5, colors=[(70, 70, 70), sf.LIGHTBLUE],
                  bar_text_fg=sf.WHITE),
     4: sf.Label((235, 230), (200, 30), "Maze height :", sf.WHITE, text_height=25, colors=[sf.TRANSPARENT]),
-    5: sf.Slider((415, 235), (120, 30), range=(5, 50), default_value=20, colors=[(70, 70, 70), sf.LIGHTBLUE],
+    5: sf.Slider((415, 235), (120, 30), range=(5, 50), default_value=5, colors=[(70, 70, 70), sf.LIGHTBLUE],
                  bar_text_fg=sf.WHITE),
     6: sf.Label((270, 330), (200, 30), "Spawn at furthest :", sf.WHITE, text_height=20, colors=[sf.TRANSPARENT]),
     7: sf.Checkbox((460, 330), (30, 30)),
@@ -90,6 +90,10 @@ def main():
             player.move(global_physics.left)
         if "droite" in pressed_keys and not solving:
             player.move(global_physics.right)
+        if mouse_event == "rightclick":
+            command_prompt.addwalldir((120,120,120))
+        if mouse_event == "leftclick":
+            command_prompt.rmwalldir()
         if "r" in pressed_keys and state_master.check_solving_update_possible():
             solving = not solving
             if solving:
@@ -132,8 +136,12 @@ def main():
         if state_master.map_shown:
             renderer.render_minimap_on_screen(player, raycaster)
         else:
-            renderer.render_3D_foreground(raycaster.raycast_distances, raycaster.raycast_colors)
-            renderer.render_3D_foreground_on_screen(player_moving=player.is_moving, y_angle=player.y_angle, tick=state_master.global_tick)
+            renderer.render_3D_foreground(raycaster.raycast_distances, raycaster.raycast_colors, level_master.end, player.pos, player.x_angle)
+            renderer.render_3D_foreground_on_screen(
+                player.is_moving,
+                player.y_angle,
+                state_master.global_tick
+            )
 
         # Screen refresh / Update
         renderer.update()

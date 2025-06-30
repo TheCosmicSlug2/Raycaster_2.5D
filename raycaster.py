@@ -20,9 +20,10 @@ class Raycaster:
 
     def is_out_of_bounds(self, posx, posy):
 
-        if posx <= 0 or posy <= 0:
+        if posx < 0 or posy < 0:
             return True
-        if posx >= self.level_master.screenw or posy >= self.level_master.screenh:
+        threshold = 0.1 # Utilisé pour minimiser les effets bizarres sur les bordure des grands labyrinthes
+        if posx > self.level_master.screenw - threshold or posy > self.level_master.screenh - threshold:
             return True
 
         return False
@@ -232,28 +233,31 @@ class Raycaster:
         return wall_grid_pos
 
 
-    def empty_space_before_wall(self):
+    def empty_spaces_before_wall(self):
         """
         Envoie un ray depuis la direction du joueur jusqu'à
         l'espace situé avant le mur devant le joueur
         """
         posx, posy = self.player.posx, self.player.posy
         lg_x, lg_y = self.physics.trouver_longueurs_trigo(self.player.x_angle)
+        empty_spaces = []
 
         while not self.is_out_of_bounds(posx, posy):
             if self.has_wall_at(posx, posy):
                 break
+            wall_gridpos = (
+                int(posx // self.level_master.cellw),
+                int(posy // self.level_master.cellh)
+            )
+            if wall_gridpos not in empty_spaces:
+                if wall_gridpos == self.player.gridpos:
+                    empty_spaces.append(None)
+                else:
+                    empty_spaces.append(wall_gridpos)
             posx += lg_x
             posy += lg_y
 
-        posx -= lg_x
-        posy -= lg_y
-
-        wall_grid_pos = (int(posx // self.level_master.cellw), int(posy // self.level_master.cellh))
-        if wall_grid_pos == self.player.gridpos:
-            wall_grid_pos = None
-
-        return wall_grid_pos
+        return empty_spaces
 
     def every_cell_in_dir(self):
         """
@@ -261,7 +265,7 @@ class Raycaster:
         l'espace situé avant le mur devant le joueur
         """
         posx, posy = self.player.posx, self.player.posy
-        player_grid_pos = self.player.gripos
+        player_grid_pos = self.player.gridpos
         lg_x, lg_y = self.physics.trouver_longueurs_trigo(self.player.x_angle)
 
         wall_pos = []

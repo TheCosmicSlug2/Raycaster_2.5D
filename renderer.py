@@ -1,7 +1,11 @@
 import pygame as pg
 from settings import FPS, const_wall_height, GREEN, BLUE, CYAN, DARK2GRAY,\
-    DARKGRAY, EXIT_COLOR, WHITE1, HALF_PLAYER_VISIBLE_SIZE, BLACK, PLAYER_VISBLE_SIZE
-from math import sin
+    DARKGRAY, EXIT_COLOR, WHITE1, HALF_PLAYER_VISIBLE_SIZE, BLACK, PLAYER_VISBLE_SIZE, SCREEN_DIMS
+from math import sin, sqrt, atan2, pi
+
+
+def normalize_angle(angle):
+    return (angle + pi) % (2 * pi) - pi
 
 
 class Renderer:
@@ -61,13 +65,30 @@ class Renderer:
         self.draw_vertical_gradient(self._3D_background, down_rect, DARK2GRAY, DARKGRAY)
 
 
-    def render_3D_foreground(self, liste_raycast: list, wall_colors: list):
+    def render_3D_foreground(self, liste_raycast: list, wall_colors: list, exit_gridpos, player_pos, player_angle):
         """ Dessine en 3D avec une liste des distances + "couleurs" pour chque distance """
 
         self._3D_foreground = pg.Surface(self.level_master.screen_dims_Y_enlarged)
 
         # Mettre l'arrière plan 3d
         self._3D_foreground.blit(self._3D_background, (0, 0))
+
+        # get dst beetween player and exit
+        player_angle =  normalize_angle(player_angle)
+        pposx, pposy = player_pos
+        eposx, eposy = exit_gridpos
+        eposx = (eposx + 0.5) * self.level_master.cellw
+        eposy = (eposy + 0.5) * self.level_master.cellh
+        dx = pposx - eposx
+        dy = pposy - eposy
+        dst = sqrt((dx / self.level_master.cellw) ** 2 + (dy / self.level_master.cellh) ** 2)
+        angle_to_e = normalize_angle(atan2(dy, dx))
+        theta = normalize_angle(player_angle - angle_to_e)
+
+        dst_from_screen_center = sin(theta) * SCREEN_DIMS[0]#/ ratio
+        x = self._3D_background.get_width() // 2 + dst_from_screen_center
+        y = self._3D_background.get_height() // 2
+
 
         nb_of_rays = len(liste_raycast)
         ray_width = self.level_master.screenw / nb_of_rays
@@ -99,6 +120,8 @@ class Renderer:
             wall_slice = pg.Rect(ray_x_int, self.level_master.screenh - int(wall_height / 2), ray_width_int, int(wall_height))
 
             pg.draw.rect(self._3D_foreground, wall_color_with_shades, wall_slice)
+        
+        pg.draw.circle(self._3D_foreground, (0, 255, 255), (x, y), 100 / dst)
 
 
     def render_minimap(self):
@@ -122,9 +145,6 @@ class Renderer:
                     self.level_master.cellh
                 )
                 pg.draw.rect(self.minimap, rect_color, rect)
-
-    def show_minimap(self):
-        self.SCREEN.blit(self.minimap)
 
     def render_minimap_on_screen(self, player, raycaster):
 
@@ -150,10 +170,6 @@ class Renderer:
             (player_center[0], player_center[1]),
             PLAYER_VISBLE_SIZE[1]
         )
-
-
-    def render_command_background_on_screen(self):
-        self.SCREEN.blit(self.background_command, (0, 0))
 
 
     def render_3D_foreground_on_screen(self, player_moving, y_angle, tick):
@@ -194,3 +210,6 @@ class Renderer:
             cursor = ""
         input_surface = self.cmdfont.render(f" > {input}{cursor}", True, self.cmdcolor)
         self.SCREEN.blit(input_surface, (10, y))
+    
+    def autofill_command(self, command_str):
+        self.input = command_str
