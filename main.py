@@ -37,7 +37,9 @@ MENU_WIDGET = {
 
 #from profilehooks import profile
 #@profile(stdout=False, filename='basic.prof')  # <== Profiling
+from random import randbytes
 
+from os import system
 
 def main():
 
@@ -91,7 +93,7 @@ def main():
         if "droite" in pressed_keys and not solving:
             player.move(global_physics.right)
         if mouse_event == "rightclick":
-            command_prompt.addwalldir((120,120,120))
+            command_prompt.addwalldir(randbytes(3))
         if mouse_event == "leftclick":
             command_prompt.rmwalldir()
         if "r" in pressed_keys and state_master.check_solving_update_possible():
@@ -136,7 +138,7 @@ def main():
         if state_master.map_shown:
             renderer.render_minimap_on_screen(player, raycaster)
         else:
-            renderer.render_3D_foreground(raycaster.raycast_distances, raycaster.raycast_colors, level_master.end, player.pos, player.x_angle)
+            renderer.render_3D_foreground(raycaster.rays_data, level_master.end, player.pos, player.x_angle)
             renderer.render_3D_foreground_on_screen(
                 player.is_moving,
                 player.y_angle,

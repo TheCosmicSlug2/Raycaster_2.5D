@@ -2,6 +2,7 @@ import pygame as pg
 from settings import FPS, const_wall_height, GREEN, BLUE, CYAN, DARK2GRAY,\
     DARKGRAY, EXIT_COLOR, WHITE1, HALF_PLAYER_VISIBLE_SIZE, BLACK, PLAYER_VISBLE_SIZE, SCREEN_DIMS
 from math import sin, sqrt, atan2, pi
+from os import system
 
 
 def normalize_angle(angle):
@@ -65,7 +66,7 @@ class Renderer:
         self.draw_vertical_gradient(self._3D_background, down_rect, DARK2GRAY, DARKGRAY)
 
 
-    def render_3D_foreground(self, liste_raycast: list, wall_colors: list, exit_gridpos, player_pos, player_angle):
+    def render_3D_foreground(self, rays_data, exit_gridpos, player_pos, player_angle):
         """ Dessine en 3D avec une liste des distances + "couleurs" pour chque distance """
 
         self._3D_foreground = pg.Surface(self.level_master.screen_dims_Y_enlarged)
@@ -90,36 +91,43 @@ class Renderer:
         y = self._3D_background.get_height() // 2
 
 
-        nb_of_rays = len(liste_raycast)
+        nb_of_rays = len(rays_data)
         ray_width = self.level_master.screenw / nb_of_rays
-
-        for ray_idx, ray_dst in enumerate(liste_raycast):
-            if ray_dst is None:  # ne pas dessiner les rayons qui vont à l'infini
+        
+        for ray_idx, ray_data in enumerate(rays_data):
+            if not ray_data:  # ne pas dessiner les rayons qui vont à l'infini
                 continue
+            
+            base_color = (ray_data[0][0])
+            
+            for ray_color, ray_dst in ray_data:
 
-            # Calculer la hauteur à l'écran du mur
-            wall_height = self.level_master.normalised_wall_height / ray_dst
+                # Calculer la hauteur à l'écran du mur
+                wall_height = self.level_master.normalised_wall_height / ray_dst
 
-            # Calculer la position et la largeur du rayon en flottant
-            ray_x = ray_idx * ray_width
-            ray_x_int = int(ray_x)
-            next_ray_x_int = int(ray_x + ray_width)
+                # Calculer la position et la largeur du rayon en flottant
+                ray_x = ray_idx * ray_width
+                ray_x_int = int(ray_x)
+                next_ray_x_int = int(ray_x + ray_width)
 
-            # Calculer la largeur en pixels
-            ray_width_int = next_ray_x_int - ray_x_int
+                # Calculer la largeur en pixels
+                ray_width_int = next_ray_x_int - ray_x_int
 
-            # Calculer la couleur
-            ray_color = wall_colors[ray_idx]
-            wall_color_with_shades = (
-                int(max(0, ray_color[0] - ray_dst // 2)),
-                int(max(0, ray_color[1] - ray_dst // 2)),
-                int(max(0, ray_color[2] - ray_dst // 2))
-            )
 
-            # Dessiner le mur
-            wall_slice = pg.Rect(ray_x_int, self.level_master.screenh - int(wall_height / 2), ray_width_int, int(wall_height))
+                base_color = blend_colors(ray_color, base_color, 0.5) # + petit -> + opaque
+                # base_color = (
+                #     int(max(0, ray_color[0] - ray_dst // 4)),
+                #     int(max(0, ray_color[1] - ray_dst // 4)),
+                #     int(max(0, ray_color[2] - ray_dst // 4))
+                # )
 
-            pg.draw.rect(self._3D_foreground, wall_color_with_shades, wall_slice)
+
+                # Dessiner le mur
+                wall_slice = pg.Rect(ray_x_int, self.level_master.screenh - int(wall_height / 2), ray_width_int, int(wall_height))
+
+                pg.draw.rect(self._3D_foreground, base_color, wall_slice)
+        
+        system("cls")
         
         pg.draw.circle(self._3D_foreground, (0, 255, 255), (x, y), 100 / dst)
 
@@ -133,7 +141,7 @@ class Renderer:
 
                 if cell.nature == 0:
                     continue
-                if cell.nature == 1:
+                if cell.nature in (1, 3):
                     rect_color = cell.color
                 if cell.nature == 2: # Sortie
                     rect_color = EXIT_COLOR
@@ -213,3 +221,14 @@ class Renderer:
     
     def autofill_command(self, command_str):
         self.input = command_str
+
+
+def blend_colors(foreground, background, alpha):
+    r1, g1, b1 = foreground
+    r2, g2, b2 = background
+
+    r = int(r1 * alpha + r2 * (1 - alpha))
+    g = int(g1 * alpha + g2 * (1 - alpha))
+    b = int(b1 * alpha + b2 * (1 - alpha))
+
+    return (r, g, b)

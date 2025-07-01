@@ -1,7 +1,8 @@
-from math import sqrt, pi, tan, cos
+from math import sqrt, pi, tan, cos, sin
 from physics_engine.physics import Physics
 from settings import RAYCASTER_RES, RAYCASTER_GAP, HALF_PLAYER_DIMS,\
     NB_RAYS, EMPTY, OUT_OF_BOUNDS_COLOR
+from cell import Cell
 
 class Raycaster:
     def __init__(self, player, level_master, renderer):
@@ -14,9 +15,8 @@ class Raycaster:
         self.nb_of_raycasts = 0
         self.max_raycast_distance = sqrt(self.level_master.cellw + self.level_master.cellh) * 10
 
+        self.rays_data = []
         self.rays_final_pos = []
-        self.raycast_distances = []
-        self.raycast_colors = []
 
     def is_out_of_bounds(self, posx, posy):
 
@@ -41,6 +41,13 @@ class Raycaster:
 
         return self.level_master.map_data[grid_y][grid_x].nature != EMPTY
 
+    def get_wall_at(self, x, y) -> None | Cell:
+        if self.is_out_of_bounds(x, y):
+            return None
+
+        gridy = int(y // self.level_master.cellh)
+        gridx = int(x // self.level_master.cellw)
+        return self.level_master.map_data[gridy][gridx]
 
     def find_wall_color(self, x, y):
         if self.is_out_of_bounds(x, y):
@@ -50,9 +57,8 @@ class Raycaster:
         gridx = int(x // self.level_master.cellw)
         color = self.level_master.map_data[gridy][gridx].color
         return color
-
-
-    def cast_ray(self, start_pos, angle, map_shown):
+    
+    def dda(self, start_pos, angle, first_cell=False):
         # Normaliser l'angle pour qu'il soit compris entre 0 et 2 * PI
         angle = self.physics.to_normalised_radians(angle)
 
@@ -71,13 +77,13 @@ class Raycaster:
         horizontal_hit_x = 0
         horizontal_hit_y = 0
 
-        first_intersection_x = None
-        first_intersection_y = None
+        first_intersection_x: int
+        first_intersection_y: int
 
         if is_facing_up:
             first_intersection_y = (
                 start_pos[1] // self.level_master.cellh
-                ) * self.level_master.cellh - 0.01
+                ) * self.level_master.cellh - 0.0001
         if is_facing_down:
             first_intersection_y = (
                 start_pos[1] // self.level_master.cellh
@@ -87,8 +93,11 @@ class Raycaster:
         first_intersection_x = start_pos[0] + (first_intersection_y - start_pos[1]) / tan(angle)
 
 
+        if first_cell:
+            return first_intersection_x, first_intersection_y
         next_horizontal_x = first_intersection_x
         next_horizontal_y = first_intersection_y
+
 
         xa = 0
         ya = 0
@@ -180,24 +189,47 @@ class Raycaster:
         else:
             wall_hit_x = vertical_hit_x
             wall_hit_y = vertical_hit_y
+        
+        return wall_hit_x, wall_hit_y
 
-        if map_shown:
-            self.rays_final_pos.append((wall_hit_x, wall_hit_y))
+    def cast_ray(self, start_pos, angle, map_shown, data=None):
+        if data is None:
+            data = []
 
-        distance = min(horizontal_distance, vertical_distance)
-        color = self.find_wall_color(wall_hit_x, wall_hit_y)
+        endx, endy = self.dda(start_pos, angle)
+        
+        wall = self.get_wall_at(endx, endy)
+        corrected_distance = self.physics.distance_between(self.player.posx, self.player.posy, endx, endy)
+        corrected_distance *= cos(abs(angle - self.player.x_angle))
+        color = OUT_OF_BOUNDS_COLOR if wall is None else wall.color
+        data.append((color, corrected_distance))
 
-        angle_correction = abs(angle - self.player.x_angle)
+        if wall == None or wall.nature in (1, 2):
+            return data
 
-        distance *= cos(angle_correction)
+        if wall.nature == 3: # Mur à demi transparent
+            # Find next wall/open space
+            next_wall = self.get_wall_at(endx, endy)
+            
+            if next_wall is None or next_wall.nature in (1, 2):
+                corrected_distance = self.physics.distance_between(self.player.posx, self.player.posy, endx, endy)
+                corrected_distance *= cos(abs(angle - self.player.x_angle))
+                color = OUT_OF_BOUNDS_COLOR if next_wall is None else next_wall.color
+                data.append((color, corrected_distance))
+                if map_shown:
+                    self.rays_final_pos.append((endx, endy))
+                return data
+            if next_wall.nature == 0 or next_wall.nature == 3:
+                self.cast_ray((endx, endy), angle, True, data)
+                return data
+            
 
-        return color, distance
+            
 
 
-    def raycast(self, map_shown: bool) -> tuple:
-        self.raycast_distances = []
-        self.raycast_colors = []
+    def raycast(self, map_shown: bool):
         self.rays_final_pos = []
+        self.rays_data = []
         rayAngle = self.player.x_angle - (self.player.fov / 2)
         player_center = (
             self.player.posx + HALF_PLAYER_DIMS[0],
@@ -206,10 +238,9 @@ class Raycaster:
 
         for _ in range(NB_RAYS):
 
-            color, distance = self.cast_ray(player_center, rayAngle, map_shown)
-            self.raycast_colors.append(color)
-            self.raycast_distances.append(distance)
+            self.rays_data.append(self.cast_ray(player_center, rayAngle, map_shown))
             rayAngle += self.player.fov / NB_RAYS
+        
 
 
     def first_wall_dir(self):

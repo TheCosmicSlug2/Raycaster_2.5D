@@ -107,7 +107,7 @@ class CommandPrompt:
         if self.command.name == "show":
             self.show_instructions()
         if self.command.name == "help":
-            help_command = self.command.args[0]
+            help_command: str = self.command.args[0]
             self.displayhelp(help_command)
         if self.command.name in ("exit", "q"):
             self.exit = True
@@ -169,7 +169,7 @@ class CommandPrompt:
         if grid_pos == None:
             self.add_line("Can't add a wall on the player")
             return
-        self.level_master.map_data[grid_pos[1]][grid_pos[0]] = Cell(nature=WALL, color=rgb)
+        self.level_master.map_data[grid_pos[1]][grid_pos[0]] = Cell(nature=SEMI_TRANSPARENT, color=rgb)
         self.renderer.render_minimap()
     
     def addwallsdir(self, rgb):

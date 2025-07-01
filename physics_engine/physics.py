@@ -61,7 +61,7 @@ class Physics:
         cell_bottom_left = map_data[cell_bottom_left_pos[1]][cell_bottom_left_pos[0]]
         cell_bottom_right = map_data[cell_bottom_right_pos[1]][cell_bottom_right_pos[0]]
 
-        return cell_top_left.nature == 1 or cell_top_right.nature == 1 or cell_bottom_left.nature == 1 or cell_bottom_right.nature == 1
+        return cell_top_left.nature in (1,3) or cell_top_right.nature in (1,3) or cell_bottom_left.nature in (1,3) or cell_bottom_right.nature in (1,3)
 
 
     @staticmethod
