@@ -1,14 +1,14 @@
 from random import randint
-from maze_solving.dead_end_fill import DeadEndFill
-from maze_solving.wall_follower import WallFollower
-from maze_creation.depth_first import DepthFirst
-from cell import Cell
+from maze.solvers.dead_end_fill import DeadEndFill
+from maze.solvers.wall_follower import WallFollower
+from maze.depth_first import DepthFirst
+from level.cell import Cell
 from settings import SCREEN_DIMS, const_wall_height, END, EXIT_COLOR, EMPTY, WALL
 
 
 class LevelMaster:
     def __init__(self, maze_dimensions, solver):
-        self.map_data = None
+        self.map_data = []
         self.grid_dims = maze_dimensions
         self.update_screen_dims(SCREEN_DIMS)
 
@@ -43,6 +43,25 @@ class LevelMaster:
     @property
     def screenh(self):
         return self.screen_dims[1]
+    
+    def get_at(self, x, y) -> None | Cell:
+        gridx = int(x // self.cellw)
+        gridy = int(y // self.cellh)
+        if gridx < 0 or gridy < 0:
+            return None
+        if gridx > self.grid_dims[0] - 1 or gridy > self.grid_dims[1] - 1:
+            return None
+        return self.map_data[gridy][gridx]
+
+    def set_at(self, gridpos: tuple[int, int], cell: Cell):
+        self.map_data[gridpos[1]][gridpos[0]] = cell
+
+
+    def check_player_reached_exit(self, player_pos):
+        gridx = round(player_pos[0] // self.cellw)
+        gridy = round(player_pos[1] // self.cellh)
+        return (gridx, gridy) == self.end
+
 
     def update_screen_dims(self, new_dims):
         self.screen_dims = new_dims
@@ -60,15 +79,8 @@ class LevelMaster:
     def update_cell_dims(self):
         self.cell_dims = (self.screenw // self.grid_dims[0], self.screenh // self.grid_dims[1])
 
-    def show_data(self):
-        for row in self.map_data:
-            for cell in row:
-                print(cell.nature, end=" ")
-            print()
-
-
     def set_end_nature(self):
-        self.map_data[self.end[1]][self.end[0]] = Cell(nature=END, color=EXIT_COLOR)
+        self.set_at(self.end, Cell(nature=END, color=EXIT_COLOR))
 
     def gen_map(self, nature: str="empty"):
         self.map_nature = nature
@@ -84,14 +96,6 @@ class LevelMaster:
             self.player_starting_pos = (randint(0, self.grid_dims[0]-1), randint(0, self.grid_dims[1]-1))
             self.end = (randint(0, self.grid_dims[0]-1), randint(0, self.grid_dims[1]-1))
             self.set_end_nature()
-
-
-    def add_colors_to_wall(self):
-        for row in self.map_data:
-            for cell in row:
-                if cell.nature == WALL:
-                    cell.color = (255, 255, 0)#(randint(120, 255), randint(120, 255), randint(120, 127))
-
 
     def solve_maze(self, current_player_grid_pos):
         if self.solve_method == "Dead end fill":

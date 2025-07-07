@@ -52,14 +52,12 @@ player_side_size = 2
 PLAYER_SPAWN_TYPE = "random"
 PLAYER_DIMS = (player_side_size, player_side_size)
 HALF_PLAYER_DIMS = (PLAYER_DIMS[0] // 2, PLAYER_DIMS[1] // 2)
-FOV_MAX = 60 * (math.pi / 180)
+FOV_MAX_DEG = 60
 
 
 # Raycaster :
 RAY_DIMS = (3, 3)
-RAYCASTER_SIZE = 1
 RAYCASTER_RES = 1
-RAYCASTER_GAP = 1
 NB_RAYS = int(SCREEN_DIMS[0] / RAYCASTER_RES)
 
 

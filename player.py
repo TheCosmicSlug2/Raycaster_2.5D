@@ -1,7 +1,7 @@
 from math import pi, sqrt
 from random import choice
 from physics_engine.physics import Physics
-from settings import PLAYER_DIMS, HALF_SCREEN_DIMS, FOV_MAX, FPS, player_side_size
+from settings import PLAYER_DIMS, HALF_SCREEN_DIMS, FOV_MAX_DEG, FPS, player_side_size
 
 class Player:
     def __init__(self, level_master, far_spawn=False):
@@ -14,8 +14,9 @@ class Player:
         self.set_angle()
         self.rect_sprite = None
         self.is_moving = False
-        self.fov = FOV_MAX
+        self.fov = FOV_MAX_DEG * (pi / 180)
         self.speed = sqrt(self.level_master.cellw * self.level_master.cellh) / (FPS / 2)
+        self.hit_nature = 0
 
     @property
     def width(self):
@@ -30,6 +31,22 @@ class Player:
             self.gridpos = self.level_master.player_starting_pos
         else:
             self.goto_random_location()
+    
+    def get_hit_nature(self, x, y):
+        checks = (
+            (x, y),
+            (x + self.width, y),
+            (x, y + self.height),
+            (x + self.width, y + self.height)
+        )
+
+        for x, y in checks:
+            cell = self.level_master.get_at(x, y)
+            if not cell:
+                continue
+            if cell.nature == 0:
+                continue
+            return cell.nature # First collision, not all
 
     def move(self, mvt_dir) -> None:
         """ Déplace le joueur selon un angle """
@@ -44,6 +61,7 @@ class Player:
             map_data=self.level_master.map_data,
             map_data_dims=self.level_master.grid_dims
             ):
+            self.hit_nature = self.get_hit_nature(next_x, next_y)
             self.is_moving = False
             return
         self.posx, self.posy = next_x, next_y
@@ -131,3 +149,7 @@ class Player:
     def set_pos(self, pos: tuple):
         self.posx = pos[0] - player_side_size // 2
         self.posy = pos[1] - player_side_size // 2
+    
+    def reset_vars(self):
+        self.hit_nature = 0
+        self.is_moving = False

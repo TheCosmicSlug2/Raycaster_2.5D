@@ -27,7 +27,7 @@ class Solver:
         self.delta_y = 0
 
         # Define turning speed
-        self.turning_speed = 5
+        self.turning_speed = 0.00001
 
         self.dic_animation = {}
         self.on_turn_animation = False
@@ -117,7 +117,7 @@ class Solver:
             return
 
         # Vitesse de rotation plus fluide
-        turning_speed = 0.06  # En radians/frame (~1.15°)
+        turning_speed = 0.08  # En radians/frame (~1.15°)
         self.player.x_angle += turning_speed * (1 if angle_diff > 0 else -1)
 
 

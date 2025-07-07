@@ -1,17 +1,19 @@
 import pygame as pg
 from commands.command_prompt import CommandPrompt
 from user_input.input_handler import InputHandler
-from maze_solving.solver import Solver
+from maze.solver import Solver
 from physics_engine.physics import Physics
-from level_master import LevelMaster
+from level.level_master import LevelMaster
 from settings import SCREEN_DIMS
 from state_master import StateMaster
 from player import Player
 from renderer import Renderer
-from raycaster import Raycaster
+from level.raycaster import Raycaster
 import smartfust as sf
+from audio import Audio
+from random import randbytes
 
-bg_texture = sf.load_texture("raycaster.png", size=SCREEN_DIMS)
+bg_texture = sf.load_texture("rsc/raycaster.png", size=SCREEN_DIMS)
 
 MENU_WIDGET = {
     "bg": sf.TextureWidget((0, 0), SCREEN_DIMS, bg_texture),
@@ -21,10 +23,10 @@ MENU_WIDGET = {
                  colors=[(200, 200, 200), (170, 170, 170), (130, 130, 130), (100, 100, 100)], borders=[3, 3, 3],
                  animation={"color": -6, "size": (3, 2)}),
     2: sf.Label((260, 170), (150, 30), "Maze width :", sf.WHITE, text_height=25, colors=[sf.TRANSPARENT]),
-    3: sf.Slider((410, 175), (120, 30), range=(5, 50), default_value=5, colors=[(70, 70, 70), sf.LIGHTBLUE],
+    3: sf.Slider((410, 175), (120, 30), range=(5, 50), default_value=20, colors=[(70, 70, 70), sf.LIGHTBLUE],
                  bar_text_fg=sf.WHITE),
     4: sf.Label((235, 230), (200, 30), "Maze height :", sf.WHITE, text_height=25, colors=[sf.TRANSPARENT]),
-    5: sf.Slider((415, 235), (120, 30), range=(5, 50), default_value=5, colors=[(70, 70, 70), sf.LIGHTBLUE],
+    5: sf.Slider((415, 235), (120, 30), range=(5, 50), default_value=20, colors=[(70, 70, 70), sf.LIGHTBLUE],
                  bar_text_fg=sf.WHITE),
     6: sf.Label((270, 330), (200, 30), "Spawn at furthest :", sf.WHITE, text_height=20, colors=[sf.TRANSPARENT]),
     7: sf.Checkbox((460, 330), (30, 30)),
@@ -37,9 +39,7 @@ MENU_WIDGET = {
 
 #from profilehooks import profile
 #@profile(stdout=False, filename='basic.prof')  # <== Profiling
-from random import randbytes
 
-from os import system
 
 def main():
 
@@ -54,14 +54,17 @@ def main():
     SOLVER = output[9]
     pg.mouse.set_visible(False)
 
+    audio = Audio()
+    state_master = StateMaster()
+    global_physics = Physics()
+
     level_master = LevelMaster(MAZE_DIMENSIONS, SOLVER)
-    renderer = Renderer(level_master=level_master)
+    renderer = Renderer(level_master, audio, state_master)
     player = Player(level_master=level_master, far_spawn=output[7])
     raycaster = Raycaster(player=player, level_master=level_master, renderer=renderer)
     input_handler = InputHandler(level_master=level_master)
     command_prompt = CommandPrompt(level_master=level_master, raycaster=raycaster, player=player, renderer=renderer)
-    state_master = StateMaster()
-    global_physics = Physics()
+    
 
     game_running = True
     solving = False
@@ -70,7 +73,7 @@ def main():
     while game_running:
 
         # Update player x and y angle using mouse position since last frame
-        player.is_moving = False
+        player.reset_vars()
         if not state_master.mouse_visible:
             delta_mousex, delta_mousey = input_handler.get_mouse_movement_since_last_frame()
         player.update_x_angle(delta_mousex)
@@ -92,6 +95,14 @@ def main():
             player.move(global_physics.left)
         if "droite" in pressed_keys and not solving:
             player.move(global_physics.right)
+        
+        if player.hit_nature == 3: # Glass:
+            if not state_master.knocked_glass:
+                audio.play_rdm(glass=True)
+                state_master.knocked_glass = True
+        else:
+            state_master.knocked_glass = False
+                
         if mouse_event == "rightclick":
             command_prompt.addwalldir(randbytes(3))
         if mouse_event == "leftclick":
@@ -127,22 +138,17 @@ def main():
         raycaster.raycast(map_shown=state_master.map_shown)
 
         # Check if player reached the exit
-        if global_physics.check_player_reached_exit(
-            player_pos=(player.posx, player.posy),
-            exit_grid_pos=level_master.end,
-            cell_dims=level_master.cell_dims
-        ):
+        if level_master.check_player_reached_exit(player.pos):
             command_prompt.set_new_map("maze")
 
         # Rendering
         if state_master.map_shown:
             renderer.render_minimap_on_screen(player, raycaster)
         else:
-            renderer.render_3D_foreground(raycaster.rays_data, level_master.end, player.pos, player.x_angle)
+            renderer.render_3D_foreground(raycaster.rays_data, player.pos, player.x_angle)
             renderer.render_3D_foreground_on_screen(
                 player.is_moving,
-                player.y_angle,
-                state_master.global_tick
+                player.y_angle
             )
 
         # Screen refresh / Update

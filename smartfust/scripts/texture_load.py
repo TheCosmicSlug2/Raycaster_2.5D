@@ -1,6 +1,6 @@
 from pygame import image, transform
 
-def load_texture(texture_path, size=None, smoothscale=None):
+def load_texture(texture_path, size: tuple|int|None=None, smoothscale: bool=False):
     texture = image.load(texture_path)
     if not size and not smoothscale:
         return texture

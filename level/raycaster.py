@@ -1,13 +1,11 @@
 from math import sqrt, pi, tan, cos, sin
 from physics_engine.physics import Physics
-from settings import RAYCASTER_RES, RAYCASTER_GAP, HALF_PLAYER_DIMS,\
+from settings import HALF_PLAYER_DIMS,\
     NB_RAYS, EMPTY, OUT_OF_BOUNDS_COLOR
-from cell import Cell
+from level.cell import Cell
 
 class Raycaster:
     def __init__(self, player, level_master, renderer):
-        self.resolution = RAYCASTER_RES
-        self.gap = RAYCASTER_GAP
         self.physics = Physics()
         self.player = player
         self.level_master = level_master
@@ -48,17 +46,8 @@ class Raycaster:
         gridy = int(y // self.level_master.cellh)
         gridx = int(x // self.level_master.cellw)
         return self.level_master.map_data[gridy][gridx]
-
-    def find_wall_color(self, x, y):
-        if self.is_out_of_bounds(x, y):
-            return OUT_OF_BOUNDS_COLOR
-
-        gridy = int(y // self.level_master.cellh)
-        gridx = int(x // self.level_master.cellw)
-        color = self.level_master.map_data[gridy][gridx].color
-        return color
     
-    def dda(self, start_pos, angle, first_cell=False):
+    def dda(self, start_pos, angle):
         # Normaliser l'angle pour qu'il soit compris entre 0 et 2 * PI
         angle = self.physics.to_normalised_radians(angle)
 
@@ -92,9 +81,6 @@ class Raycaster:
         # Calcul de x pour cette première intersection en utilisant l'angle
         first_intersection_x = start_pos[0] + (first_intersection_y - start_pos[1]) / tan(angle)
 
-
-        if first_cell:
-            return first_intersection_x, first_intersection_y
         next_horizontal_x = first_intersection_x
         next_horizontal_y = first_intersection_y
 

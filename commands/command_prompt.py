@@ -1,4 +1,4 @@
-from cell import Cell
+from level.cell import Cell
 from utils import *
 from math import pi
 from commands.text import *

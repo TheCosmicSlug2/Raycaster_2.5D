@@ -94,23 +94,6 @@ class Physics:
         return cell.color, (x, y)
 
     @staticmethod
-    def check_player_reached_exit(player_pos, exit_grid_pos, cell_dims):
-        gridx = round(player_pos[0]) // cell_dims[0]
-        gridy = round(player_pos[1] // cell_dims[1])
-        grid_pos = (gridx, gridy)
-        return grid_pos == exit_grid_pos
-
-    @staticmethod
-    def get_wall_color(posx: int, posy: int, map_data) -> int:
-        """ Checke la couleur d'un mur à position lambda """
-        column_idx = int(posx // CELL_DIMS[0])
-        row_idx = int(posy // CELL_DIMS[1])
-        if row_idx >= grid_dims[1] or column_idx >= grid_dims[0]:
-            return True
-        cell = map_data[row_idx][column_idx]
-        return cell.color
-
-    @staticmethod
     def calculate_dst_to_player(x: int, y: int, player) -> int:
         """ Renvoie la distance au joueur calculée avec pythagore """
         ray_width = abs(player.posx - x)

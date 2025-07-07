@@ -2,7 +2,6 @@ import pygame as pg
 from settings import FPS, const_wall_height, GREEN, BLUE, CYAN, DARK2GRAY,\
     DARKGRAY, EXIT_COLOR, WHITE1, HALF_PLAYER_VISIBLE_SIZE, BLACK, PLAYER_VISBLE_SIZE, SCREEN_DIMS
 from math import sin, sqrt, atan2, pi
-from os import system
 
 
 def normalize_angle(angle):
@@ -10,13 +9,15 @@ def normalize_angle(angle):
 
 
 class Renderer:
-    def __init__(self, level_master) -> None:
+    def __init__(self, level_master, audio, state_master) -> None:
         self.level_master = level_master
         self.SCREEN = pg.display.set_mode(self.level_master.screen_dims)
         self.clock = pg.time.Clock()
         self.fps = FPS
         self.const_wall_height = const_wall_height
         pg.display.set_caption("2.5D Engine")
+        self.audio = audio
+        self.state_master = state_master
 
         pg.font.init()
         self.font = pg.font.SysFont('Arial', 30)
@@ -65,19 +66,11 @@ class Renderer:
         down_rect = pg.Rect(0, self.level_master.screenh, self.level_master.screenw, self.level_master.screenh)
         self.draw_vertical_gradient(self._3D_background, down_rect, DARK2GRAY, DARKGRAY)
 
-
-    def render_3D_foreground(self, rays_data, exit_gridpos, player_pos, player_angle):
-        """ Dessine en 3D avec une liste des distances + "couleurs" pour chque distance """
-
-        self._3D_foreground = pg.Surface(self.level_master.screen_dims_Y_enlarged)
-
-        # Mettre l'arrière plan 3d
-        self._3D_foreground.blit(self._3D_background, (0, 0))
-
+    def get_exit_symbol_pos_col(self, player_pos, player_angle) -> tuple[list, tuple]:
         # get dst beetween player and exit
         player_angle =  normalize_angle(player_angle)
         pposx, pposy = player_pos
-        eposx, eposy = exit_gridpos
+        eposx, eposy = self.level_master.end
         eposx = (eposx + 0.5) * self.level_master.cellw
         eposy = (eposy + 0.5) * self.level_master.cellh
         dx = pposx - eposx
@@ -88,7 +81,26 @@ class Renderer:
 
         dst_from_screen_center = sin(theta) * SCREEN_DIMS[0]#/ ratio
         x = self._3D_background.get_width() // 2 + dst_from_screen_center
-        y = self._3D_background.get_height() // 2
+        y = self._3D_background.get_height() // 2 # - 1/dst # + distance petite, plus hauteur départ grande
+
+        # Draw pointy triangle head
+        tick = self.state_master.global_tick
+        y -= const_wall_height/4 - sin(tick / 5) * 100 / dst
+        rem_y = 100 * (1 + 6/dst)
+        triangle_points = [(x, y), (x-(15 - sin(tick / 5) * 15), y-rem_y), (x+(15 - sin(tick / 5) * 15), y-rem_y)]
+        triangle_color = (255, 158 + int(40 * sin(tick / 10)), 0)
+        return triangle_points, triangle_color
+
+    def render_3D_foreground(self, rays_data, player_pos, player_angle):
+        """ Dessine en 3D avec une liste des distances + "couleurs" pour chque distance """
+
+        self._3D_foreground = pg.Surface(self.level_master.screen_dims_Y_enlarged)
+
+        # Mettre l'arrière plan 3d
+        self._3D_foreground.blit(self._3D_background, (0, 0))
+
+        trian_points, trian_col = self.get_exit_symbol_pos_col(player_pos, player_angle)
+        pg.draw.polygon(self._3D_foreground, trian_col, trian_points)
 
 
         nb_of_rays = len(rays_data)
@@ -114,7 +126,7 @@ class Renderer:
                 ray_width_int = next_ray_x_int - ray_x_int
 
 
-                base_color = blend_colors(ray_color, base_color, 0.5) # + petit -> + opaque
+                base_color = blend_colors(ray_color, base_color, 0.8) # + petit -> + opaque
                 # base_color = (
                 #     int(max(0, ray_color[0] - ray_dst // 4)),
                 #     int(max(0, ray_color[1] - ray_dst // 4)),
@@ -127,9 +139,6 @@ class Renderer:
 
                 pg.draw.rect(self._3D_foreground, base_color, wall_slice)
         
-        system("cls")
-        
-        pg.draw.circle(self._3D_foreground, (0, 255, 255), (x, y), 100 / dst)
 
 
     def render_minimap(self):
@@ -180,13 +189,20 @@ class Renderer:
         )
 
 
-    def render_3D_foreground_on_screen(self, player_moving, y_angle, tick):
+    def render_3D_foreground_on_screen(self, player_moving, y_angle):
         y_offset = -y_angle
 
+        d_offset = sin(self.state_master.global_tick / 2)
         if player_moving:
-            y_offset += sin(tick / 2) * 7
+            y_offset += d_offset * 7
+            if d_offset > 0.9 and not self.state_master.step_playing:
+                self.audio.play_rdm(steps=True)
+                self.state_master.step_playing = True
+            else:
+                self.state_master.step_playing = False
 
         self.SCREEN.blit(self._3D_foreground, (0, y_offset))
+
 
 
     def update(self):

@@ -9,6 +9,8 @@ class StateMaster:
         self.global_tick = 0
         self.tick_solving = 0
         self.solving = False
+        self.knocked_glass = False
+        self.step_playing = False
 
     @staticmethod
     def check_update_possible(tick, threshold):

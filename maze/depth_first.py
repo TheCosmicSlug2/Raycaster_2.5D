@@ -1,6 +1,6 @@
 from random import randint, choice
 from settings import *
-from cell import *
+from level.cell import *
 
 
 class DepthFirst:
