@@ -1,5 +1,5 @@
 from math import sqrt, pi, tan, cos, sin
-from physics_engine.physics import Physics
+from physics_engine.physics import Physics, distance_between, trouver_longueurs_trigo, to_normalised_radians
 from settings import HALF_PLAYER_DIMS,\
     NB_RAYS, EMPTY, OUT_OF_BOUNDS_COLOR
 from level.cell import Cell
@@ -15,6 +15,7 @@ class Raycaster:
 
         self.rays_data = []
         self.rays_final_pos = []
+        self.ennemy_pos = (120, 120)
 
     def is_out_of_bounds(self, posx, posy):
 
@@ -49,7 +50,7 @@ class Raycaster:
     
     def dda(self, start_pos, angle):
         # Normaliser l'angle pour qu'il soit compris entre 0 et 2 * PI
-        angle = self.physics.to_normalised_radians(angle)
+        angle = to_normalised_radians(angle)
 
 
         # Déterminer les directions (haut/bas/gauche/droite) en fonction de l'angle
@@ -156,14 +157,14 @@ class Raycaster:
         vertical_distance = 0
 
         if found_horizontal_wall:
-            horizontal_distance = self.physics.distance_between(
+            horizontal_distance = distance_between(
                 start_pos[0], start_pos[1], horizontal_hit_x, horizontal_hit_y
             )
         else:
             horizontal_distance = 999
 
         if found_vertical_wall:
-            vertical_distance = self.physics.distance_between(
+            vertical_distance = distance_between(
                 start_pos[0], start_pos[1], vertical_hit_x, vertical_hit_y
             )
         else:
@@ -185,7 +186,7 @@ class Raycaster:
         endx, endy = self.dda(start_pos, angle)
         
         wall = self.get_wall_at(endx, endy)
-        corrected_distance = self.physics.distance_between(self.player.posx, self.player.posy, endx, endy)
+        corrected_distance = distance_between(self.player.posx, self.player.posy, endx, endy)
         corrected_distance *= cos(abs(angle - self.player.x_angle))
         color = OUT_OF_BOUNDS_COLOR if wall is None else wall.color
         data.append((color, corrected_distance))
@@ -198,7 +199,7 @@ class Raycaster:
             next_wall = self.get_wall_at(endx, endy)
             
             if next_wall is None or next_wall.nature in (1, 2):
-                corrected_distance = self.physics.distance_between(self.player.posx, self.player.posy, endx, endy)
+                corrected_distance = distance_between(self.player.posx, self.player.posy, endx, endy)
                 corrected_distance *= cos(abs(angle - self.player.x_angle))
                 color = OUT_OF_BOUNDS_COLOR if next_wall is None else next_wall.color
                 data.append((color, corrected_distance))
@@ -209,10 +210,6 @@ class Raycaster:
                 self.cast_ray((endx, endy), angle, True, data)
                 return data
             
-
-            
-
-
     def raycast(self, map_shown: bool):
         self.rays_final_pos = []
         self.rays_data = []
@@ -222,17 +219,16 @@ class Raycaster:
             self.player.posy + HALF_PLAYER_DIMS[1]
         )
 
-        for _ in range(NB_RAYS):
+        for ray_idx in range(NB_RAYS):
 
-            self.rays_data.append(self.cast_ray(player_center, rayAngle, map_shown))
+            self.rays_data.append((ray_idx, self.cast_ray(player_center, rayAngle, map_shown)))
             rayAngle += self.player.fov / NB_RAYS
-        
 
 
     def first_wall_dir(self):
         """ Envoie un ray depuis la direction du joueur jusqu'à un mur """
         posx, posy = self.player.posx, self.player.posy
-        lg_x, lg_y = self.physics.trouver_longueurs_trigo(self.player.x_angle)
+        lg_x, lg_y = trouver_longueurs_trigo(self.player.x_angle)
 
         while not self.is_out_of_bounds(posx, posy):
             if self.has_wall_at(posx, posy):
@@ -256,7 +252,7 @@ class Raycaster:
         l'espace situé avant le mur devant le joueur
         """
         posx, posy = self.player.posx, self.player.posy
-        lg_x, lg_y = self.physics.trouver_longueurs_trigo(self.player.x_angle)
+        lg_x, lg_y = trouver_longueurs_trigo(self.player.x_angle)
         empty_spaces = []
 
         while not self.is_out_of_bounds(posx, posy):
@@ -283,7 +279,7 @@ class Raycaster:
         """
         posx, posy = self.player.posx, self.player.posy
         player_grid_pos = self.player.gridpos
-        lg_x, lg_y = self.physics.trouver_longueurs_trigo(self.player.x_angle)
+        lg_x, lg_y = trouver_longueurs_trigo(self.player.x_angle)
 
         wall_pos = []
 
@@ -321,7 +317,7 @@ class Raycaster:
             bottom_right_pos[1] // self.level_master.cellh
         )
 
-        lg_x, lg_y = self.physics.trouver_longueurs_trigo(self.player.x_angle)
+        lg_x, lg_y = trouver_longueurs_trigo(self.player.x_angle)
 
 
         while 0 < posx < self.level_master.screenw and 0 < posy < self.level_master.screenh:

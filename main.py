@@ -11,7 +11,8 @@ from renderer import Renderer
 from level.raycaster import Raycaster
 import smartfust as sf
 from audio import Audio
-from random import randbytes
+from random import randbytes, randint
+from entitites import EntityManager
 
 bg_texture = sf.load_texture("rsc/raycaster.png", size=SCREEN_DIMS)
 
@@ -19,7 +20,7 @@ MENU_WIDGET = {
     "bg": sf.TextureWidget((0, 0), SCREEN_DIMS, bg_texture),
     0: sf.Label((220, 50), (350, 80), "Main Menu", sf.WHITE, text_height=50,
                 colors=[sf.WHITE, (200, 200, 255), (150, 150, 255), (100, 100, 255)], borders=[3, 3, 3]),
-    1: sf.Button((280, 400), (230, 60), text="Play", return_value="quit", textfg=sf.WHITE,text_height=20,
+    1: sf.Button((280, 440), (230, 60), text="Play", return_value="quit", textfg=sf.WHITE,text_height=20,
                  colors=[(200, 200, 200), (170, 170, 170), (130, 130, 130), (100, 100, 100)], borders=[3, 3, 3],
                  animation={"color": -6, "size": (3, 2)}),
     2: sf.Label((260, 170), (150, 30), "Maze width :", sf.WHITE, text_height=25, colors=[sf.TRANSPARENT]),
@@ -30,9 +31,11 @@ MENU_WIDGET = {
                  bar_text_fg=sf.WHITE),
     6: sf.Label((270, 330), (200, 30), "Spawn at furthest :", sf.WHITE, text_height=20, colors=[sf.TRANSPARENT]),
     7: sf.Checkbox((460, 330), (30, 30)),
-    8: sf.Label((265, 280), (100, 30), "Solver :", sf.WHITE, text_height=25, colors=[sf.TRANSPARENT]),
-    9: sf.List((375, 280), (150, 30), text_height=18, values=["Dead end fill", "RH-Follower", "LH-Follower"],
-               colors=[(50, 50, 50), sf.LIGHTBLUE]),
+    8: sf.Checkbox((460, 370), (30, 30)),
+    9: sf.Label((270, 370), (200, 30), "çyka blyat mode :", sf.WHITE, text_height=20, colors=[sf.TRANSPARENT]),
+    10: sf.Label((265, 280), (100, 30), "Solver :", sf.WHITE, text_height=25, colors=[sf.TRANSPARENT]),
+    11: sf.List((375, 280), (150, 30), text_height=18, values=["Dead end fill", "RH-Follower", "LH-Follower"],
+               colors=[(50, 50, 50), sf.LIGHTBLUE])
 
 }
 
@@ -51,10 +54,11 @@ def main():
     if output == sf.GLOBAL_QUIT:
         return
     MAZE_DIMENSIONS = (output[3], output[5])
-    SOLVER = output[9]
+    SOLVER = output[11]
+    blyat_mode = output[8]
     pg.mouse.set_visible(False)
 
-    audio = Audio()
+    audio = Audio(blyat_mode)
     state_master = StateMaster()
     global_physics = Physics()
 
@@ -64,7 +68,7 @@ def main():
     raycaster = Raycaster(player=player, level_master=level_master, renderer=renderer)
     input_handler = InputHandler(level_master=level_master)
     command_prompt = CommandPrompt(level_master=level_master, raycaster=raycaster, player=player, renderer=renderer)
-    
+    entity_manager = EntityManager(player, blyat_mode)
 
     game_running = True
     solving = False
@@ -133,6 +137,12 @@ def main():
             pg.mouse.set_visible(False)
             continue
 
+        entity_manager.update()
+
+        if blyat_mode:
+            for row in level_master.map_data:
+                for cell in row:
+                    cell.color = (randint(150, 255), 0, 0)
 
         # Raycast
         raycaster.raycast(map_shown=state_master.map_shown)
@@ -145,7 +155,9 @@ def main():
         if state_master.map_shown:
             renderer.render_minimap_on_screen(player, raycaster)
         else:
-            renderer.render_3D_foreground(raycaster.rays_data, player.pos, player.x_angle)
+            raycast_data = raycaster.rays_data + entity_manager.get_ennemies()
+            raycast_data = sorted(raycast_data, key=lambda x: x[1][0][1], reverse=True)
+            renderer.render_3D_foreground(raycast_data, player.pos, player.x_angle)
             renderer.render_3D_foreground_on_screen(
                 player.is_moving,
                 player.y_angle

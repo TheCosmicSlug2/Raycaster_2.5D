@@ -2,10 +2,10 @@ import pygame as pg
 from settings import FPS, const_wall_height, GREEN, BLUE, CYAN, DARK2GRAY,\
     DARKGRAY, EXIT_COLOR, WHITE1, HALF_PLAYER_VISIBLE_SIZE, BLACK, PLAYER_VISBLE_SIZE, SCREEN_DIMS
 from math import sin, sqrt, atan2, pi
+from physics_engine.physics import *
 
 
-def normalize_angle(angle):
-    return (angle + pi) % (2 * pi) - pi
+
 
 
 class Renderer:
@@ -24,7 +24,9 @@ class Renderer:
 
         self.render_minimap()
         self.render_3D_background()
-
+        liste = [pg.image.load(f"images/frame{i+1}.png") for i in range(6)]
+        self.textures = {idx: image for idx, image in enumerate(liste)}
+        print(self.textures)
         # CMD
 
         self.MAX_LINES = 30
@@ -66,29 +68,30 @@ class Renderer:
         down_rect = pg.Rect(0, self.level_master.screenh, self.level_master.screenw, self.level_master.screenh)
         self.draw_vertical_gradient(self._3D_background, down_rect, DARK2GRAY, DARKGRAY)
 
-    def get_exit_symbol_pos_col(self, player_pos, player_angle) -> tuple[list, tuple]:
+    """ Calculs : """
+    def get_xy_screenpos(self, dpos, player_angle) -> tuple[float, float]:
         # get dst beetween player and exit
-        player_angle =  normalize_angle(player_angle)
-        pposx, pposy = player_pos
-        eposx, eposy = self.level_master.end
-        eposx = (eposx + 0.5) * self.level_master.cellw
-        eposy = (eposy + 0.5) * self.level_master.cellh
-        dx = pposx - eposx
-        dy = pposy - eposy
-        dst = sqrt((dx / self.level_master.cellw) ** 2 + (dy / self.level_master.cellh) ** 2)
-        angle_to_e = normalize_angle(atan2(dy, dx))
-        theta = normalize_angle(player_angle - angle_to_e)
-
+        dx, dy = dpos
+        theta = get_theta_angle((dx, dy), player_angle)
         dst_from_screen_center = sin(theta) * SCREEN_DIMS[0]#/ ratio
         x = self._3D_background.get_width() // 2 + dst_from_screen_center
         y = self._3D_background.get_height() // 2 # - 1/dst # + distance petite, plus hauteur départ grande
+        return x, y
+    
+    def get_xy_dst(self, pos1, pos2, player_angle):
+        dpos = get_dpos(pos1, pos2)
+        x, y = self.get_xy_screenpos(dpos, player_angle)
+        dst = pythagoras(dpos[0], dpos[1])
+        return x, y, dst
+    
 
+    def get_triangle_points(self, x, y, dst):
         # Draw pointy triangle head
         tick = self.state_master.global_tick
         y -= const_wall_height/4 - sin(tick / 5) * 100 / dst
         rem_y = 100 * (1 + 6/dst)
-        triangle_points = [(x, y), (x-(15 - sin(tick / 5) * 15), y-rem_y), (x+(15 - sin(tick / 5) * 15), y-rem_y)]
-        triangle_color = (255, 158 + int(40 * sin(tick / 10)), 0)
+        triangle_points = [(x, y), (x-(15 - sin(tick / 4) * 15), y-rem_y), (x+(15 - sin(tick / 4) * 15), y-rem_y)]
+        triangle_color = (255, 158 + int(40 * sin(tick / 8)), 0)
         return triangle_points, triangle_color
 
     def render_3D_foreground(self, rays_data, player_pos, player_angle):
@@ -99,22 +102,38 @@ class Renderer:
         # Mettre l'arrière plan 3d
         self._3D_foreground.blit(self._3D_background, (0, 0))
 
-        trian_points, trian_col = self.get_exit_symbol_pos_col(player_pos, player_angle)
+        # Exit blitted
+        end_pos = self.level_master.end_middle
+        x, y, dst = self.get_xy_dst(player_pos, end_pos, player_angle)
+        trian_points, trian_col = self.get_triangle_points(x, y, dst)
         pg.draw.polygon(self._3D_foreground, trian_col, trian_points)
 
 
         nb_of_rays = len(rays_data)
         ray_width = self.level_master.screenw / nb_of_rays
         
-        for ray_idx, ray_data in enumerate(rays_data):
+        for ray_idx, ray_data in rays_data:
             if not ray_data:  # ne pas dessiner les rayons qui vont à l'infini
                 continue
             
             base_color = (ray_data[0][0])
+
+            if ray_idx == "ennemy":
+                data, id = ray_data # La liste ne contient qu'une seule valeur
+                pos, dst = data
+                x, y = self.get_xy_screenpos(get_dpos(player_pos, pos), player_angle)
+                texture = self.textures[id]
+                width, height = texture.get_size()
+                mult = 50/dst
+                nwidth = min(width * mult, 1200)
+                nheight = min(height * mult, 1000)
+                texture = pg.transform.scale(texture, (nwidth, nheight))
+                self._3D_foreground.blit(texture, (x - nwidth // 2, y - nheight // 2))
+                continue
             
             for ray_color, ray_dst in ray_data:
 
-                # Calculer la hauteur à l'écran du mur
+                # Calculer la hauteur à l'écran du murq
                 wall_height = self.level_master.normalised_wall_height / ray_dst
 
                 # Calculer la position et la largeur du rayon en flottant
@@ -126,12 +145,12 @@ class Renderer:
                 ray_width_int = next_ray_x_int - ray_x_int
 
 
-                base_color = blend_colors(ray_color, base_color, 0.8) # + petit -> + opaque
-                # base_color = (
-                #     int(max(0, ray_color[0] - ray_dst // 4)),
-                #     int(max(0, ray_color[1] - ray_dst // 4)),
-                #     int(max(0, ray_color[2] - ray_dst // 4))
-                # )
+                base_color = blend_colors(ray_color, base_color, 0.2) # + petit -> + opaque
+                base_color = (
+                    int(max(0, base_color[0] - ray_dst // 3)),
+                    int(max(0, base_color[1] - ray_dst // 3)),
+                    int(max(0, base_color[2] - ray_dst // 3))
+                )
 
 
                 # Dessiner le mur

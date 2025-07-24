@@ -1,6 +1,6 @@
 from math import pi, sqrt
 from random import choice
-from physics_engine.physics import Physics
+from physics_engine.physics import trouver_longueurs_trigo, check_4_side_collision
 from settings import PLAYER_DIMS, HALF_SCREEN_DIMS, FOV_MAX_DEG, FPS, player_side_size
 
 class Player:
@@ -51,10 +51,10 @@ class Player:
     def move(self, mvt_dir) -> None:
         """ Déplace le joueur selon un angle """
         self.is_moving = True
-        lg_x, lg_y = Physics.trouver_longueurs_trigo(self.x_angle + mvt_dir)
+        lg_x, lg_y = trouver_longueurs_trigo(self.x_angle + mvt_dir)
         next_x, next_y = self.posx + (lg_x * self.speed), self.posy + (lg_y * self.speed)
         # si le movement suivant collide un mur
-        if Physics.check_4_side_collision(
+        if check_4_side_collision(
             top_left_pos=(next_x, next_y),
             object_dims=self.dims,
             cell_dims=self.level_master.cell_dims,

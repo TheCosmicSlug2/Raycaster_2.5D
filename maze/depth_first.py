@@ -7,7 +7,7 @@ class DepthFirst:
     def __init__(self, grid_dims) -> None:
 
 	    # Initialisation d'une grille pleine de murs
-        self.map_data = [[Cell(nature=WALL, color=(randint(100, 255), randint(100, 255), randint(100, 255))) for _ in range(grid_dims[0])] for _ in range(grid_dims[1])]
+        self.map_data = [[Cell(nature=WALL, color=(randint(100, 200), randint(100, 200), randint(100, 200))) for _ in range(grid_dims[0])] for _ in range(grid_dims[1])]
 
 	    # Choix de la cellule de départ (aléatoire)
         self.starting_cell = (randint(0, grid_dims[0] - 1), randint(0, grid_dims[1] - 1))

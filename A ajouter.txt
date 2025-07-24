@@ -1,9 +1,6 @@
 Peut être des murs qui bougent
 Des putains de portails comme dans portal
 
-Bruits :
-# Quand on touche un mur plein
-
 Minimap
 Sol texturé
 Plafond texturé

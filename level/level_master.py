@@ -44,6 +44,12 @@ class LevelMaster:
     def screenh(self):
         return self.screen_dims[1]
     
+    @property
+    def end_middle(self):
+        eposx = (self.end[0] + 0.5) * self.cellw
+        eposy = (self.end[1] + 0.5) * self.cellh
+        return eposx, eposy
+    
     def get_at(self, x, y) -> None | Cell:
         gridx = int(x // self.cellw)
         gridy = int(y // self.cellh)

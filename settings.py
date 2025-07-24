@@ -57,7 +57,7 @@ FOV_MAX_DEG = 60
 
 # Raycaster :
 RAY_DIMS = (3, 3)
-RAYCASTER_RES = 1
+RAYCASTER_RES = 2 # Less -> more quality
 NB_RAYS = int(SCREEN_DIMS[0] / RAYCASTER_RES)
 
 
