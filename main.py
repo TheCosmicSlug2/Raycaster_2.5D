@@ -67,7 +67,7 @@ def main():
     player = Player(level_master=level_master, far_spawn=output[7])
     raycaster = Raycaster(player=player, level_master=level_master, renderer=renderer)
     input_handler = InputHandler(level_master=level_master)
-    command_prompt = CommandPrompt(level_master=level_master, raycaster=raycaster, player=player, renderer=renderer)
+    command_prompt = CommandPrompt(level_master=level_master, raycaster=raycaster, player=player, renderer=renderer, audio=audio)
     entity_manager = EntityManager(player, blyat_mode)
 
     game_running = True

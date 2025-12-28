@@ -24,7 +24,7 @@ class GameCommand:
 
 
 class CommandPrompt:
-    def __init__(self, level_master, raycaster, player, renderer):
+    def __init__(self, level_master, raycaster, player, renderer, audio):
         self.level_master = level_master
         self.raycaster = raycaster
         self.player = player
@@ -32,6 +32,7 @@ class CommandPrompt:
         self.command: GameCommand
         self.execution_sucess = None
         self.exit = False
+        self.audio = audio
 
         self.output_lines = []
         self.input_line = ""
@@ -169,7 +170,10 @@ class CommandPrompt:
         if grid_pos == None:
             self.add_line("Can't add a wall on the player")
             return
+        self.audio.play_place()
         self.level_master.map_data[grid_pos[1]][grid_pos[0]] = Cell(nature=SEMI_TRANSPARENT, color=rgb)
+        
+        self.audio.play_place()
         self.renderer.render_minimap()
     
     def addwallsdir(self, rgb):
@@ -191,6 +195,9 @@ class CommandPrompt:
         wall_pos = self.raycaster.first_wall_dir()
         if wall_pos == None:
             return
+        nature = self.level_master.map_data[wall_pos[1]][wall_pos[0]].nature
+        play_glass = True if nature == 3 else False
+        self.audio.play_dig(play_glass)
         self.level_master.map_data[wall_pos[1]][wall_pos[0]] = Cell(nature=EMPTY)
         self.renderer.render_minimap()
 

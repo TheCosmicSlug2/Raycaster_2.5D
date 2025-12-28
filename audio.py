@@ -11,6 +11,12 @@ def to_sound(path) -> pg.mixer.Sound:
 steproot = "rsc/sounds/step"
 glassroot = "rsc/sounds/glass"
 cyka = pg.mixer.Sound("rsc/sounds/cyka.mp3")
+dig_wall = pg.mixer.Sound("rsc/sounds/wall_dig.ogg")
+place1 = pg.mixer.Sound("rsc/sounds/wall_place.ogg")
+remove1 = pg.mixer.Sound("rsc/sounds/place2.mp3")
+dig_glass1 = pg.mixer.Sound("rsc/sounds/glass_dig1.ogg")
+dig_glass2 = pg.mixer.Sound("rsc/sounds/glass_dig2.ogg")
+dig_glass3 = pg.mixer.Sound("rsc/sounds/glass_dig3.ogg")
 
 class Audio:
     def __init__(self, blyat_mode=False) -> None:
@@ -23,6 +29,16 @@ class Audio:
         if blyat_mode:
             pg.mixer.music.load("rsc/sounds/anthem.mp3")
             pg.mixer.music.play()
+    
+    @staticmethod
+    def play_place():
+        place1.play()
+
+    @staticmethod
+    def play_dig(glass=False):
+        liste = [dig_glass1, dig_glass2, dig_glass3] if glass else [remove1]
+        choice(liste).play()
+
     
     def play_rdm(self, steps=False, glass=False):
         if steps:
