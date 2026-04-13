@@ -16,6 +16,9 @@ class Raycaster:
         self.rays_data = []
         self.rays_final_pos = []
         self.ennemy_pos = (120, 120)
+    
+    def set_mode(self, pacman_mode):
+        self.oob_color = (0, 0, 0) if pacman_mode else OUT_OF_BOUNDS_COLOR
 
     def is_out_of_bounds(self, posx, posy):
 
@@ -188,7 +191,7 @@ class Raycaster:
         wall = self.get_wall_at(endx, endy)
         corrected_distance = distance_between(self.player.posx, self.player.posy, endx, endy)
         corrected_distance *= cos(abs(angle - self.player.x_angle))
-        color = OUT_OF_BOUNDS_COLOR if wall is None else wall.color
+        color = self.oob_color if wall is None else wall.color
         data.append((color, corrected_distance))
 
         if wall == None or wall.nature in (1, 2):
@@ -201,7 +204,7 @@ class Raycaster:
             if next_wall is None or next_wall.nature in (1, 2):
                 corrected_distance = distance_between(self.player.posx, self.player.posy, endx, endy)
                 corrected_distance *= cos(abs(angle - self.player.x_angle))
-                color = OUT_OF_BOUNDS_COLOR if next_wall is None else next_wall.color
+                color = self.oob_color if next_wall is None else next_wall.color
                 data.append((color, corrected_distance))
                 if map_shown:
                     self.rays_final_pos.append((endx, endy))

@@ -62,6 +62,7 @@ class InputHandler:
             pg.K_c: "cmd",
             pg.K_ESCAPE: "esc",
             pg.K_r : "r",
+            pg.K_e : "e"
         }
 
         pressed_keys = []

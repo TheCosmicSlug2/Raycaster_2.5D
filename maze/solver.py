@@ -1,5 +1,4 @@
-from math import radians, pi, cos, sin, atan2
-from physics_engine.physics import Physics
+from math import pi, atan2
 
 class Solver:
     def __init__(self, player, level_master) -> None:
@@ -12,7 +11,7 @@ class Solver:
         player_grid_pos = self.get_player_grid_pos()
 
         # Find the path from the player's initial position
-        level_master.solve_maze(player_grid_pos)
+        self.exit_path = level_master.solve_maze(player_grid_pos, level_master.end)
 
         # Initialize indices for the path to the exit
         self.current_idx_in_maze_solving = 0
@@ -33,8 +32,8 @@ class Solver:
         self.on_turn_animation = False
 
     def two_path_idx_identical(self, idx1, idx2):
-        if 0 <= idx1 < len(self.level_master.exit_path) and 0 <= idx2 < len(self.level_master.exit_path):
-            return self.level_master.exit_path[idx1] == self.level_master.exit_path[idx2]
+        if 0 <= idx1 < len(self.exit_path) and 0 <= idx2 < len(self.exit_path):
+            return self.exit_path[idx1] == self.exit_path[idx2]
         return False
 
 
@@ -44,7 +43,7 @@ class Solver:
 
     def update_location_in_path(self):
         self.current_idx_in_maze_solving += 1
-        self.expected_pos_in_maze_solving = self.level_master.exit_path[self.current_idx_in_maze_solving]
+        self.expected_pos_in_maze_solving = self.exit_path[self.current_idx_in_maze_solving]
 
     def check_reached_exit(self):
         # Get current grid position of the player
@@ -55,7 +54,7 @@ class Solver:
 
         # Check if the player has reached the exit in the path
         next_path_idx = self.current_idx_in_maze_solving + 1
-        if next_path_idx > len(self.level_master.exit_path) - 1:
+        if next_path_idx > len(self.exit_path) - 1:
             return True
 
         return False
@@ -63,7 +62,7 @@ class Solver:
     def update_deltas(self):
         # Get the next grid position from the exit path
         next_path_idx = self.current_idx_in_maze_solving + 1
-        next_grid_pos = self.level_master.exit_path[next_path_idx]
+        next_grid_pos = self.exit_path[next_path_idx]
 
         # Calculate deltas
         new_dx = next_grid_pos[0] - self.player_grid_pos[0]

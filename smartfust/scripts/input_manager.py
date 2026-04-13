@@ -1,4 +1,5 @@
-from pygame import event, MOUSEBUTTONUP, KEYDOWN, mouse, K_LEFT, K_RIGHT, K_UP, K_DOWN, K_BACKSPACE, K_RETURN, key, QUIT
+from pygame import MOUSEWHEEL, event, MOUSEBUTTONUP, KEYDOWN, mouse, K_LEFT, K_RIGHT, K_UP, K_DOWN,\
+    K_BACKSPACE, K_RETURN, key, QUIT, K_DELETE
 
 # Events
 EXIT = 1
@@ -14,16 +15,19 @@ MOUSE_POS = 10
 KEYS = 11
 BACKSPACE = 12
 ENTER = 13
+DELETE = 14
+SCROLL_UP = 15
+SCROLL_DOWN = 16
 
 class InputManager:
     def __init__(self):
         self.events = {}
         self.last_events = {}
 
-    def get_events(self):
+    def get_events(self, pg_events):
         # Pygame events
         self.events[KEYS] = []
-        for e in event.get():
+        for e in pg_events:
             if e.type == QUIT:
                 self.events[EXIT] = True
             if e.type == MOUSEBUTTONUP:
@@ -31,9 +35,14 @@ class InputManager:
                     self.events[LEFTCLICK_UP] = e.pos
                 if e.button == 3:
                     self.events[RIGHTCLICK_UP] = e.pos
+            if e.type == MOUSEWHEEL:
+                if e.y == 1:
+                    self.events[SCROLL_UP] = True
+                if e.y == -1:
+                    self.events[SCROLL_DOWN] = True
             if e.type == KEYDOWN:
                 if e.unicode:
-                    self.events[KEYS] = e.unicode
+                    self.events[KEYS].append(e.unicode)
 
         # Mouse pos and click
         mouse_pressed = mouse.get_pressed()
@@ -49,7 +58,8 @@ class InputManager:
             K_UP: UP,
             K_DOWN: DOWN,
             K_BACKSPACE: BACKSPACE,
-            K_RETURN: ENTER
+            K_RETURN: ENTER,
+            K_DELETE: DELETE
         }
 
         keys = key.get_pressed()

@@ -1,5 +1,5 @@
 import pygame as pg
-from random import choice, randint
+from random import choice
 pg.mixer.init()
 
 # Get sounds

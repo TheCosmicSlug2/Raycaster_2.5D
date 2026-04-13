@@ -17,23 +17,14 @@ class Physics:
             (0, 1): self.right
         }
 
-@staticmethod
-def trouver_longueurs_trigo(loc_angle_degres: int) -> tuple:
-    """ Convertit un angle en radian et renvoie son sinus et cosinus """
-    angle_radians = radians(loc_angle_degres)
-    x = cos(angle_radians)
-    y = sin(angle_radians)
-    return x, y
 
-
-@staticmethod
 def trouver_longueurs_trigo(rad: int) -> tuple:
     """ Convertit un angle en radian et renvoie son sinus et cosinus """
     x = cos(rad)
     y = sin(rad)
     return x, y
 
-@staticmethod
+
 def check_4_side_collision(top_left_pos, object_dims, cell_dims, map_data, map_data_dims) -> bool:
     """ Putain c'est chiant les collisions """
 

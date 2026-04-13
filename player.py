@@ -4,12 +4,13 @@ from physics_engine.physics import trouver_longueurs_trigo, check_4_side_collisi
 from settings import PLAYER_DIMS, HALF_SCREEN_DIMS, FOV_MAX_DEG, FPS, player_side_size
 
 class Player:
-    def __init__(self, level_master, far_spawn=False):
+    def __init__(self, level_master, far_spawn=False, pacman_mode=False):
         self.level_master = level_master
         self.far_spawn = far_spawn
         self.dims = PLAYER_DIMS
         self.x_angle = 0
         self.y_angle = HALF_SCREEN_DIMS[1]
+        self.pacman_mode = pacman_mode
         self.reset_position()
         self.set_angle()
         self.rect_sprite = None
@@ -17,6 +18,7 @@ class Player:
         self.fov = FOV_MAX_DEG * (pi / 180)
         self.speed = sqrt(self.level_master.cellw * self.level_master.cellh) / (FPS / 2)
         self.hit_nature = 0
+        self.dir = (0, 0)
 
     @property
     def width(self):
@@ -27,7 +29,7 @@ class Player:
         return self.dims[1]
 
     def reset_position(self):
-        if self.far_spawn:
+        if self.far_spawn or self.pacman_mode:
             self.gridpos = self.level_master.player_starting_pos
         else:
             self.goto_random_location()
@@ -54,17 +56,29 @@ class Player:
         lg_x, lg_y = trouver_longueurs_trigo(self.x_angle + mvt_dir)
         next_x, next_y = self.posx + (lg_x * self.speed), self.posy + (lg_y * self.speed)
         # si le movement suivant collide un mur
-        if check_4_side_collision(
-            top_left_pos=(next_x, next_y),
+        blocked_y = check_4_side_collision(
+            top_left_pos=(self.posx, next_y),
             object_dims=self.dims,
             cell_dims=self.level_master.cell_dims,
             map_data=self.level_master.map_data,
             map_data_dims=self.level_master.grid_dims
-            ):
+            )
+        blocked_x = check_4_side_collision(
+            top_left_pos=(next_x, self.posy),
+            object_dims=self.dims,
+            cell_dims=self.level_master.cell_dims,
+            map_data=self.level_master.map_data,
+            map_data_dims=self.level_master.grid_dims
+            )
+        self.dir = (lg_x, lg_y)
+        if not blocked_x:
+            self.posx = next_x
+        if not blocked_y:
+            self.posy = next_y
+        if blocked_x or blocked_y:
             self.hit_nature = self.get_hit_nature(next_x, next_y)
             self.is_moving = False
             return
-        self.posx, self.posy = next_x, next_y
         self.check_collisions_border()
 
     def check_collisions_border(self) -> None:

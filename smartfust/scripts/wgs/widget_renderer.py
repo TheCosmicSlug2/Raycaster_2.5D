@@ -1,5 +1,7 @@
 from pygame import draw, font, Rect, SRCALPHA, Surface
-from smartfust.scripts.wgs.widgets import *
+from smartfust.scripts.colors.color_list import GREY
+from smartfust.scripts.wgs.widgets import Widget, Button, TextureWidget,\
+    AddonWidget, Checkbox, Entry, Label, Slider, List
 
 class WidgetRenderer:
     def __init__(self):
@@ -9,7 +11,7 @@ class WidgetRenderer:
 
     def reset_fonts(self, font_name: str):
         self.current_font = font_name
-        for font_height in self.fonts.keys():
+        for font_height in self.fonts:
             self.add_font(font_height)
 
     def add_font(self, height: int):
@@ -47,14 +49,14 @@ class WidgetRenderer:
                 y = (outer_surface.get_height() - sy) / 2
                 outer_surface.blit(widget.texture, (x, y))
 
-        if isinstance(widget, Label) or isinstance(widget, Button):
+        if isinstance(widget, (Label, Button)):
             font = self.get_font(widget.text_height)
             text_render = font.render(widget.text, True, widget.textfg, None)
 
             half_x = (widget.width - text_render.get_width()) / 2
             half_y = (widget.height - text_render.get_height()) / 2
             outer_surface.blit(text_render, (half_x, half_y))
-        if isinstance(widget, Checkbox) and widget.state == True:
+        if isinstance(widget, Checkbox) and widget.state:
             inner_surface.fill(widget.check_color.rgba)
             outer_surface.blit(inner_surface, (tot_borx, tot_bory))
         if isinstance(widget, Entry):
@@ -62,17 +64,31 @@ class WidgetRenderer:
             font = self.get_font(widget.text_height)
             text_render = font.render(text, True, (0, 0, 0))
             widget.text_width = text_render.get_width()
-            outer_surface.blit(text_render, (tot_borx + 2, widget.y_margin))
+            outer_surface.blit(text_render, (tot_borx + 2, widget.y_margin - 1))
             # Blit cursor
             if widget.cursor_state:
                 # Create temporary render to get a good position
                 temp_rend = font.render(text[:widget.cursorx], True, (0, 0, 0))
-                cursor_rect = Rect(temp_rend.get_width() + tot_borx, widget.y_margin / 2 + tot_bory, 2, widget.text_height)
+                cursor_rect = Rect(
+                    temp_rend.get_width() + tot_borx,
+                    widget.y_margin / 2 + tot_bory,
+                    2,
+                    widget.text_height)
                 draw.rect(outer_surface, (0, 0, 0), cursor_rect)
         if isinstance(widget, Slider):
             # Draw slider bar :
-            rect = Rect(widget.bar_x + tot_borx, tot_bory, widget.bar_width, widget.height - tot_bory * 2)
-            rect2 = Rect(widget.bar_x + tot_borx + 2, tot_bory + 2, widget.bar_width - 4, widget.height - tot_bory * 2 - 4)
+            rect = Rect(
+                widget.bar_x + tot_borx,
+                widget.bar_y + tot_bory,
+                widget.bar_width,
+                widget.bar_height
+            )
+            rect2 = Rect(
+                widget.bar_x + tot_borx + 2,
+                widget.bar_y + tot_bory + 2,
+                widget.bar_width - 4,
+                widget.bar_height - 4
+            )
             draw.rect(outer_surface, (150, 150, 150), rect)
             draw.rect(outer_surface, (120, 120, 120), rect2)
             font = self.get_font(widget.text_height)
@@ -80,12 +96,16 @@ class WidgetRenderer:
             widget.addon_surface.blit(
                 render,
                 (widget.bar_x + tot_borx + (rect.width - render.get_width()) // 2,
-                 tot_bory + (rect.height - render.get_height())))
+                 widget.bar_y + tot_bory + (rect.height - render.get_height()) // 2
+                 ))
         if isinstance(widget, List):
             text = str(widget.current_value)
             font = self.get_font(widget.text_height)
             text_render = font.render(text, True, (0, 0, 0))
-            outer_surface.blit(text_render, (tot_borx + 2, (widget.height - text_render.get_height()) / 2))
+            outer_surface.blit(
+                text_render,
+                (tot_borx + 3, (widget.height - text_render.get_height()) / 2)
+            )
 
             # fill addon surface
             y = 0
@@ -96,6 +116,18 @@ class WidgetRenderer:
                 small_rect.fill(bg_color)
                 text_render = font.render(value, False, fg_color, bg_color)
                 widget.addon_surface.blit(small_rect, (0, y*widget.height))
-                widget.addon_surface.blit(text_render, (widget.tot_border, y * widget.height + (widget.height - text_render.get_height()) // 2))
+                widget.addon_surface.blit(
+                    text_render,
+                    (widget.tot_border + 2, y * widget.height + (widget.height - text_render.get_height()) // 2)
+                )
                 y += 1
+            
+            gray_slidebar = Surface((widget.scrollbar.width, widget.addon_height))
+            gray_slidebar.fill((200, 200, 200))
+            widget.addon_surface.blit(gray_slidebar, (widget.width - gray_slidebar.get_width(),0))
+
+            # Scrollar
+            surface = Surface(widget.scrollbar.dims)
+            surface.fill((GREY))
+            widget.addon_surface.blit(surface, widget.scrollbar.pos)
         return outer_surface

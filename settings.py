@@ -60,6 +60,7 @@ RAY_DIMS = (3, 3)
 RAYCASTER_RES = 2 # Less -> more quality
 NB_RAYS = int(SCREEN_DIMS[0] / RAYCASTER_RES)
 
+TICKS_TO_UPDATE_ENNEMY_TEXTURES = 3
 
 # Durées
 FPS = 30

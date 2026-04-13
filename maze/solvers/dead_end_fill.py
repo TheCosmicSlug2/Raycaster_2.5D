@@ -65,29 +65,41 @@ class DeadEndFill:
                 dead_ends_removed += 1
                 self.has_removed_cells = True
 
-        if dead_ends_removed > 1:
-            print(f"[algorythms: DeadEndFill] : Solving... (removed {dead_ends_removed} dead ends)")
+        # if dead_ends_removed > 1:
+        #     print(f"[algorythms: DeadEndFill] : Solving... (removed {dead_ends_removed} dead ends)")
 
     def solve_maze(self):
-        """Résout le labyrinthe en supprimant toutes les impasses, puis rend le résultat."""
+        """Résout le labyrinthe en supprimant les impasses puis reconstruit le chemin."""
+        print("solving maze")
+        self.exit_path = []
 
         while self.has_removed_cells:
+            self.remove_dead_ends()
 
-            self.remove_dead_ends()  # Suppression des impasses à chaque itération
-
-        # Trouver l'itinéraire
-
+        # --- Reconstruction du chemin ---
         current_pos = self.starting_grid_pos
-        self.exit_path = [self.starting_grid_pos]
+        self.exit_path = [current_pos]
+        previous_pos = None  # pour éviter de revenir en arrière
+        visited = []
+        visited.append(current_pos)
+
         while current_pos != self.ending_grid_pos:
-            current_neighbours = self.find_available_neighbours(current_pos)
+            neighbours = self.find_available_neighbours(current_pos)
 
-            # Enlever les chemins déjà présents
+            # garder uniquement les voisins ≠ précédent
+            valid_neighbours = [n for n in neighbours if n not in visited]
 
-            new_neighbour = [neighbour for neighbour in current_neighbours if neighbour not in self.exit_path]
+            # sécurité anti-boucle infinie
+            if not valid_neighbours:
+                return
 
-            self.exit_path.extend(new_neighbour)
-            current_pos = self.exit_path[-1]
+            # dans un labyrinthe "nettoyé", il ne doit rester qu'un chemin
+            next_pos = valid_neighbours[0]
+
+            self.exit_path.append(next_pos)
+            previous_pos = current_pos
+            current_pos = next_pos
+            visited.append(next_pos)
 
             self.exit_dst += 1
 

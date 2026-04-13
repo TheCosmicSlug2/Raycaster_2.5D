@@ -5,4 +5,10 @@ Minimap
 Sol texturé
 Plafond texturé
 
+Pacman (murs bleus, plafonds noirs et ghosts qui pathtrace au joueur,
+pacgommes à ramasser avec un compteur smartfust)
+/ horreur (pouvant traverser les murs)
+
+update la taille des ennemies juste toutes les 2-3 frames
+
 Saut / crouch
